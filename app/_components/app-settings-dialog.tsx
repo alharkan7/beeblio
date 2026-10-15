@@ -22,25 +22,22 @@ import {
   type SettingDefinition,
   type SettingName,
   type SettingsSnapshot,
-  type SettingStatus,
 } from "@/lib/app-settings-registry";
 import type { SystemToolStatus } from "@/lib/system-tools";
 import { getSettings, getSystemTools, saveSettings } from "../settings-actions";
 
 /** Pages where people get the values the dialog asks for. */
 const HELP_LINKS: Partial<Record<SettingName, { href: string; label: string }>> = {
-  OPENROUTER_API_KEY: { href: "https://openrouter.ai/keys", label: "Get a key" },
-  OPENROUTER_MODEL_ID: { href: "https://openrouter.ai/models", label: "Browse models" },
-  GOOGLE_API_KEY: { href: "https://aistudio.google.com/apikey", label: "Get a key" },
+  OPENROUTER_API_KEY: { href: "https://openrouter.ai/keys", label: "Get a Key" },
+  OPENROUTER_MODEL_ID: { href: "https://openrouter.ai/models", label: "Browse Models" },
+  GOOGLE_API_KEY: { href: "https://aistudio.google.com/apikey", label: "Get a Key" },
+  BRAVE_SEARCH_API_KEY: { href: "https://brave.com/search/api/", label: "Get a Key" },
+  MONID_API_KEY: { href: "https://app.monid.ai/access/api-keys", label: "Get a Key" },
+  OPENALEX_API_KEY: { href: "https://help.openalex.org/api/", label: "Get a Key" },
+  NCBI_API_KEY: { href: "https://www.ncbi.nlm.nih.gov/account/settings/", label: "Get a Key" },
 };
 
 type FieldError = { message: string; field?: SettingName };
-
-function describeSecret(status: SettingStatus | undefined) {
-  if (status?.source === "settings") return `Saved here · ends in ${status.last4}`;
-  if (status?.source === "env") return `From .env.local · ends in ${status.last4}`;
-  return "Not set";
-}
 
 /** Plain values start as the current value, so an untouched field is never sent back. */
 function initialDrafts(snapshot: SettingsSnapshot): Partial<Record<SettingName, string>> {
@@ -243,8 +240,6 @@ export function SettingField({
   const missing = setting.required && !status?.source && !draft.trim();
   const fieldError = error?.field === name ? error.message : undefined;
   const link = HELP_LINKS[name];
-  // Says where a prefilled value comes from until the person edits it.
-  const fromEnvironment = !secret && status?.source === "env" && draft === (status.value ?? "");
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -255,8 +250,6 @@ export function SettingField({
             {missing ? <span className="ml-1.5 text-[11px] font-normal text-amber-700 dark:text-amber-400">Required</span> : null}
           </Label>
           <p className="text-[11px] text-muted-foreground">
-            {secret ? <span aria-live="polite">{describeSecret(status)} · </span> : null}
-            {fromEnvironment ? "From .env.local · " : null}
             {setting.help}
             {link ? (
               <>
@@ -281,7 +274,7 @@ export function SettingField({
         inputMode={setting.kind === "integer" ? "numeric" : undefined}
         className="h-9 text-xs md:text-xs"
         value={draft}
-        placeholder={secret && status?.source ? "Enter a new key to replace it" : setting.placeholder}
+        placeholder={secret && status?.source ? "Enter a New Key (Replacing .env values)" : setting.placeholder}
         autoComplete="off"
         spellCheck={false}
         disabled={busy}

@@ -37,7 +37,7 @@ describe("merged app settings", () => {
 
   test("reports required settings that are missing", () => {
     assert.equal(openRouterApiKey(), undefined);
-    assert.deepEqual(settingsSnapshot().missingRequired, ["Main model", "Context window (tokens)", "OpenRouter"]);
+    assert.deepEqual(settingsSnapshot().missingRequired, ["Main Model", "Context Window (Tokens)", "OpenRouter"]);
   });
 
   test("reads environment defaults with whitespace removed", () => {

@@ -106,7 +106,7 @@ The installer is written to `desktop/release/`. Run `pnpm install` again in a ne
 
 ## Configuration
 
-Everything is configured in the app under **Settings** (account menu, or **Settings…** in the desktop app's menu); until the required settings exist, the menu shows **Finish setup**. The main agent needs an OpenRouter API key, a main model, and that model's context window. Beeblio checks the key with OpenRouter, looks the model up there, and fills in its context window. **Advanced AI models** in the account menu lets you choose a separate model for each AI task. Changes apply right away, without a restart.
+Everything is configured in the app under **Settings** (account menu, or **Settings…** in the desktop app's menu); until the required settings exist, the menu shows **Finish setup**. The main agent needs an OpenRouter API key, a main model, and that model's context window. Beeblio checks the key with OpenRouter, looks the model up there, and fills in its context window. The same dialog has optional lite, review, and vision models, which give titles and sentence suggestions, document review, and image analysis each their own model. Changes apply right away, without a restart.
 
 In a checkout you can also set any of these as environment variables in `.env.local`; copy [`.env.example`](./.env.example). A value saved in Settings takes precedence, and removing it there falls back to `.env.local`. The settings are:
 

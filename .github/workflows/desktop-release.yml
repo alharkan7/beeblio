@@ -4,7 +4,7 @@
 # caught before a release. Each platform builds on its own runner because the
 # bundled Node.js binary and native modules (better-sqlite3, sharp) are
 # platform-specific.
-name: Desktop release
+name: Desktop Release
 
 on:
   push:

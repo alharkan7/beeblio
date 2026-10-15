@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, BookOpenText, CircleCheck, FolderPlus, Loader2, Sparkles, Table2 } from "lucide-react";
+import { ArrowRight, BookOpenText, CircleCheck, FolderPlus, Loader2, PencilSparkles, Table2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,9 +18,9 @@ const STEPS: readonly Step[] = ["welcome", "connect", "project"];
 const SETUP_FIELDS: readonly SettingName[] = ["OPENROUTER_API_KEY", "OPENROUTER_MODEL_ID", "OPENROUTER_MODEL_CONTEXT_WINDOW_TOKENS"];
 
 const FEATURES = [
-  { Icon: Sparkles, title: "An assistant that works in your files", body: "It searches, analyses, and writes inside your project folder." },
-  { Icon: BookOpenText, title: "Literature in one place", body: "Find papers, keep references, and build a literature matrix next to your drafts." },
-  { Icon: Table2, title: "Data, reports, and figures", body: "Edit documents, spreadsheets, notebooks, and LaTeX without switching apps." },
+  { Icon: PencilSparkles, title: "An Assistant that Works in Your Files", body: "It searches, analyses, and writes inside your project folder." },
+  { Icon: BookOpenText, title: "Literature in One Place", body: "Find papers, keep references, and build a literature matrix next to your drafts." },
+  { Icon: Table2, title: "Data, Reports, and Figures", body: "Edit documents, spreadsheets, notebooks, and LaTeX without switching apps." },
 ] as const;
 
 /**
@@ -105,7 +105,7 @@ export function WelcomeDialog({
             </ul>
             <DialogFooter className="sm:justify-between">
               <Button type="button" variant="ghost" onClick={() => close("skipped")}>Skip</Button>
-              <Button type="button" onClick={() => goTo("connect")} autoFocus>Get started<ArrowRight /></Button>
+              <Button type="button" onClick={() => goTo("connect")} autoFocus>Get Started<ArrowRight /></Button>
             </DialogFooter>
           </>
         ) : null}
@@ -113,7 +113,7 @@ export function WelcomeDialog({
         {step === "connect" ? (
           <>
             <DialogHeader className="text-left">
-              <DialogTitle className="text-xl">Connect a model</DialogTitle>
+              <DialogTitle className="text-xl">Connect a Model</DialogTitle>
               <DialogDescription>
                 Beeblio uses models from OpenRouter, paid with your own key. Pick any model there; its context window is filled in for you.
               </DialogDescription>
@@ -158,7 +158,7 @@ export function WelcomeDialog({
         {step === "project" ? (
           <>
             <DialogHeader className="text-left">
-              <DialogTitle className="text-xl">{hasProjects ? "Open a project" : "Create your first project"}</DialogTitle>
+              <DialogTitle className="text-xl">{hasProjects ? "Open a Project" : "Create Your First Project"}</DialogTitle>
               <DialogDescription>
                 {hasProjects
                   ? "Open any of your projects; a short tour of the workspace starts there."
@@ -167,13 +167,13 @@ export function WelcomeDialog({
             </DialogHeader>
             {!connected ? (
               <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300" role="status">
-                The assistant needs a model before it can answer. Use <span className="font-medium">Finish setup</span> in the account menu when you are ready.
+                The assistant needs a model before it can answer. Use <span className="font-medium">Finish Setup</span> in the account menu when you are ready.
               </p>
             ) : null}
             <DialogFooter className="sm:justify-between">
               <Button type="button" variant="ghost" onClick={() => setStep("connect")}>Back</Button>
               {hasProjects ? (
-                <Button type="button" onClick={() => close("done")} autoFocus>Go to my projects</Button>
+                <Button type="button" onClick={() => close("done")} autoFocus>Open My Projects</Button>
               ) : (
                 <CreateProjectForm customTrigger={<Button type="button" autoFocus><FolderPlus />Link a project folder</Button>} />
               )}

@@ -164,8 +164,8 @@ export function WorkspaceTour() {
           <h2 id="beeblio-tour-title" className="mt-1 text-sm font-semibold tracking-[-0.01em]">{step.title}</h2>
           <p id="beeblio-tour-body" className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</p>
           <div className="mt-4 flex items-center justify-between gap-2">
-            <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground" onClick={() => finish("skipped")}>
-              Skip tour
+            <Button type="button" variant="link" size="sm" className="h-8 px-0 text-xs text-muted-foreground" onClick={() => finish("skipped")}>
+              Skip Tour
             </Button>
             <div className="flex items-center gap-1.5">
               {position > 0 ? (

@@ -51,7 +51,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "outputs",
     targets: ["rail-output"],
-    title: "Your research, by kind",
+    title: "Your Research, by Kind",
     body: "Data, analyses, reports, and figures in this project, each kind in its own view.",
     side: "right",
   },
@@ -65,14 +65,14 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "quick-open",
     targets: ["quick-open"],
-    title: "Quick open",
+    title: "Quick Open",
     body: "Jump to any file, reference, or paper. Shortcut: ⌘P on a Mac, Ctrl+P on Windows.",
     side: "bottom",
   },
   {
     id: "review",
     targets: ["review"],
-    title: "Document review",
+    title: "Document Review",
     body: "Get focused feedback on the open document. Suggested changes are applied only when you accept them.",
     side: "bottom",
   },
@@ -93,7 +93,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "account",
     targets: ["account"],
-    title: "Settings and this tour",
+    title: "Settings and This Tour",
     body: "Change models and API keys, check the tools the assistant uses, or take this tour again.",
     side: "right",
   },

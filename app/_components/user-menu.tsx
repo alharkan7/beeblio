@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { ArrowUpRight, Compass, Globe, Moon, Settings, SlidersHorizontal, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -104,7 +103,7 @@ export function UserMenu({
   return (
     <>
       <DropdownMenu>
-      <DropdownMenuTrigger aria-label={missingSetup.length ? "Open workspace menu (setup incomplete)" : "Open workspace menu"} className="workspace-rail-secondary relative flex size-9 items-center justify-center gap-2 rounded-lg text-xs font-medium text-muted-foreground outline-none ring-0 transition-colors hover:bg-accent/70 hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/20">
+        <DropdownMenuTrigger aria-label={missingSetup.length ? "Open workspace menu (setup incomplete)" : "Open workspace menu"} className="workspace-rail-secondary relative flex size-9 items-center justify-center gap-2 rounded-lg text-xs font-medium text-muted-foreground outline-none ring-0 transition-colors hover:bg-accent/70 hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/20">
           <Avatar className="size-7 cursor-pointer border border-border/80 shadow-[0_2px_8px_-4px_rgb(18_35_48/0.3)] transition-transform hover:-translate-y-0.5 active:translate-y-0">
             <AvatarImage src={user.image || ""} alt={name} />
             <AvatarFallback className="bg-primary/10 text-primary">{initial}</AvatarFallback>
@@ -119,6 +118,14 @@ export function UserMenu({
           collisionPadding={12}
           className="w-56 animate-in slide-in-from-top-2"
         >
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onSelect={() => setAppSettingsOpen(true)}
+          >
+            <Settings className="h-4 w-4" />
+            <span>{missingSetup.length ? "Finish Setup" : "App Settings"}</span>
+            {missingSetup.length ? <span className="ml-auto size-2 rounded-full bg-amber-500" aria-hidden="true" /> : null}
+          </DropdownMenuItem>
           {projectId ? (
             <DropdownMenuItem
               className="cursor-pointer"
@@ -128,20 +135,9 @@ export function UserMenu({
               <span>Project Settings</span>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem
-            className="cursor-pointer"
-            onSelect={() => setAppSettingsOpen(true)}
-          >
-            <Settings className="h-4 w-4" />
-            <span>{missingSetup.length ? "Finish setup" : "Settings"}</span>
-            {missingSetup.length ? <span className="ml-auto size-2 rounded-full bg-amber-500" aria-hidden="true" /> : null}
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/account"><Settings className="h-4 w-4" /><span>Advanced AI models</span></Link>
-          </DropdownMenuItem>
           <DropdownMenuItem className="cursor-pointer" onSelect={showTour}>
             <Compass className="h-4 w-4" />
-            <span>Show tour</span>
+            <span>Show Tour</span>
           </DropdownMenuItem>
           <div className="flex min-h-10 items-center gap-2 px-2.5 py-1.5" role="group" aria-label="Theme">
             <span className="flex min-w-0 flex-1 items-center gap-2 text-sm">

@@ -29,24 +29,24 @@ export const SETTING_GROUPS: ReadonlyArray<{ id: SettingGroup; label: string; de
 ];
 
 export const SETTINGS = [
-  { name: "OPENROUTER_MODEL_ID", label: "Main model", group: "models", kind: "model", required: true, placeholder: "provider/model", help: "OpenRouter model ID for the research agent." },
-  { name: "OPENROUTER_MODEL_CONTEXT_WINDOW_TOKENS", label: "Context window (tokens)", group: "models", kind: "integer", required: true, help: "Size of the main model's context window. Filled in from OpenRouter when you save a new main model." },
-  { name: "OPENROUTER_MODEL_ID_LITE", label: "Lite model", group: "models", kind: "model", placeholder: "Uses the main model", help: "Titles, equations, and sentence suggestions." },
-  { name: "OPENROUTER_MODEL_ID_REVIEW", label: "Review model", group: "models", kind: "model", placeholder: "Uses the main model", help: "Document review." },
-  { name: "OPENROUTER_VISION_MODEL_ID", label: "Vision model", group: "models", kind: "model", placeholder: "Uses the main model", help: "Image analysis." },
-  { name: "OPENROUTER_REQUEST_TIMEOUT_MS", label: "Request timeout (ms)", group: "models", kind: "integer", placeholder: "No limit", help: "Limits a single OpenRouter request." },
+  { name: "OPENROUTER_MODEL_ID", label: "Main Model", group: "models", kind: "model", required: true, placeholder: "openai/gpt-6-sol", help: "OpenRouter model ID for the research agent." },
+  { name: "OPENROUTER_MODEL_CONTEXT_WINDOW_TOKENS", label: "Context Window (Tokens)", group: "models", kind: "integer", required: true, placeholder: "1050000", help: "Size of the main model's context window. Filled in from OpenRouter when you save a new main model." },
+  { name: "OPENROUTER_MODEL_ID_LITE", label: "Lite Model", group: "models", kind: "model", placeholder: "openai/gpt-6-luna", help: "Titles, equations, and sentence suggestions. Left empty, uses the main model." },
+  { name: "OPENROUTER_MODEL_ID_REVIEW", label: "Review Model", group: "models", kind: "model", placeholder: "Uses the main model", help: "Document review." },
+  { name: "OPENROUTER_VISION_MODEL_ID", label: "Vision Model", group: "models", kind: "model", placeholder: "Uses the main model", help: "Image analysis." },
+  { name: "OPENROUTER_REQUEST_TIMEOUT_MS", label: "Request Timeout (ms)", group: "models", kind: "integer", placeholder: "No limit", help: "Limits a single OpenRouter request." },
   { name: "OPENROUTER_API_KEY", label: "OpenRouter", group: "keys", kind: "secret", required: true, placeholder: "sk-or-…", help: "Required for the agent and the AI writing tools. Checked with OpenRouter before it is saved." },
   { name: "GOOGLE_API_KEY", label: "Google Gemini", group: "keys", kind: "secret", help: "Transcription and Knowledge search." },
   { name: "BRAVE_SEARCH_API_KEY", label: "Brave Search", group: "keys", kind: "secret", help: "The agent's Brave web search tool." },
   { name: "MONID_API_KEY", label: "Monid", group: "keys", kind: "secret", help: "Monid-backed research tools." },
   { name: "OPENALEX_API_KEY", label: "OpenAlex", group: "keys", kind: "secret", help: "Literature search." },
   { name: "NCBI_API_KEY", label: "NCBI (PubMed)", group: "keys", kind: "secret", help: "PubMed literature search." },
-  { name: "GOOGLE_TRANSCRIPTION_MODEL_ID", label: "Transcription model", group: "google", kind: "model", help: "Gemini model for transcribing audio and video." },
-  { name: "GOOGLE_KNOWLEDGE_EMBEDDING_MODEL_ID", label: "Knowledge embedding model", group: "google", kind: "model", placeholder: "models/…", help: "Used when a Knowledge store is created; an existing store keeps its model." },
-  { name: "GOOGLE_KNOWLEDGE_QUERY_MODEL_ID", label: "Knowledge query model", group: "google", kind: "model", help: "Gemini model with File Search support." },
+  { name: "GOOGLE_TRANSCRIPTION_MODEL_ID", label: "Transcription Model", group: "google", kind: "model", placeholder: "gemini-3.5-transcribe", help: "Gemini model for transcribing audio and video." },
+  { name: "GOOGLE_KNOWLEDGE_EMBEDDING_MODEL_ID", label: "Knowledge Embedding Model", group: "google", kind: "model", placeholder: "models/gemini-embedding-2", help: "Used when a Knowledge store is created; an existing store keeps its model." },
+  { name: "GOOGLE_KNOWLEDGE_QUERY_MODEL_ID", label: "Knowledge Query Model", group: "google", kind: "model", placeholder: "gemini-3.5-flash", help: "Gemini model with File Search support." },
   { name: "CROSSREF_MAILTO", label: "Crossref", group: "contact", kind: "email", placeholder: "you@example.org", help: "Crossref and PubMed metadata requests." },
   { name: "OPENALEX_EMAIL", label: "OpenAlex", group: "contact", kind: "email", placeholder: "you@example.org", help: "OpenAlex literature search." },
-  { name: "PUBLIC_TUNNEL_ORIGIN", label: "Public tunnel origin", group: "sharing", kind: "url", placeholder: "https://…", help: "HTTPS address of a tunnel to this computer. Microsoft and other people cannot reach localhost." },
+  { name: "PUBLIC_TUNNEL_ORIGIN", label: "Public Tunnel Origin", group: "sharing", kind: "url", placeholder: "https://…", help: "HTTPS address of a tunnel to this computer. Microsoft and other people cannot reach localhost." },
 ] as const satisfies readonly SettingDefinition[];
 
 export type SettingName = (typeof SETTINGS)[number]["name"];

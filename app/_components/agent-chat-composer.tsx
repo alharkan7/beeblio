@@ -431,7 +431,7 @@ export function AgentChatComposer({
                   )}
                 </PromptInputButton>
               </TooltipTrigger>
-              <TooltipContent>Upload &amp; mention</TooltipContent>
+              <TooltipContent>Upload &amp; Mention</TooltipContent>
             </Tooltip>
             <ScreenshotButton disabled={isUploading} onCapture={onUpload} />
             {hasWorkspaceSelection ? (
@@ -770,11 +770,11 @@ function ScreenshotButton({ disabled, onCapture }: { disabled: boolean; onCaptur
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <PromptInputButton type="button" aria-label="Take screenshot" disabled={disabled || capturing} onClick={() => void capture()}>
+        <PromptInputButton type="button" aria-label="Take Screenshot" disabled={disabled || capturing} onClick={() => void capture()}>
           {capturing ? <Loader2 className="animate-spin" /> : <ScreenShare />}
         </PromptInputButton>
       </TooltipTrigger>
-      <TooltipContent>Take screenshot</TooltipContent>
+      <TooltipContent>Take Screenshot</TooltipContent>
     </Tooltip>
   );
 }

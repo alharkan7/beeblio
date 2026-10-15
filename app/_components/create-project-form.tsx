@@ -94,7 +94,7 @@ export function CreateProjectForm({ customTrigger }: { customTrigger?: React.Rea
               <Input id="folderPath" name="folderPath" value={folderPath} onChange={(event) => setFolderPath(event.target.value)} placeholder="/absolute/path/to/folder" required disabled={loading} />
               <Button type="button" variant="outline" onClick={chooseFolder} disabled={loading}>Browse</Button>
             </div>
-            <p className="text-xs text-muted-foreground">Files stay here. Missing research folders, references.bib, and the literature matrix are created without replacing existing files.</p>
+            {/* <p className="text-xs text-muted-foreground">Files stay here. Missing research folders, references.bib, and the literature matrix are created without replacing existing files.</p> */}
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="description" className="text-sm font-medium">
@@ -115,7 +115,7 @@ export function CreateProjectForm({ customTrigger }: { customTrigger?: React.Rea
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Link Project Folder
+              Link Folder
             </Button>
           </DialogFooter>
         </form>
