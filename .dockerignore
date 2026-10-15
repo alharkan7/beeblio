@@ -1,18 +1,74 @@
-# Secrets never enter image layers; the compose stack injects .env.local at
-# runtime via env_file. Build state and dev-only trees stay out of the context.
+# Version control
 .git
+.gitignore
+.gitattributes
+
+# Environment, secrets, and credentials
+.env
+.env.*
+!.env.example
+.gcs-sa-key.json
+*.pem
+*.key
+
+# Dependencies and caches
+node_modules
+.pnpm-store
+
+# Build outputs
 .next
 .output
 .eve
-.pnpm-store
-node_modules
-.env
-.env.*
+.nitro
+dist
+build
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Application database, runtime data, and project mounts
+.beeblio
+projects
 local-files
 local-s3
 local-agent-libs
+.local-files-orphan-backup
+.demo-project
+.viewer-test
+
+# Documentation and project notes
 docs
+*.md
+CLAUDE.md
+AGENTS.md
+
+# Logs, evals, and debug artifacts
+*.log
 *.ndjson
-tsconfig.tsbuildinfo
+auth-log.txt
+debug-error.txt
+scripts/eval/runs/
+spike/
+
+# Editor and IDE metadata
+.vscode
+.idea
+.cursor
+.agents
+
+# Python bytecode and caches
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# Docker infrastructure files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# OS files and temporary scratch scripts
 .DS_Store
+Thumbs.db
+scripts/tmp-*
 test-streamdown.js

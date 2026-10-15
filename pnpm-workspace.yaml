@@ -1,5 +1,5 @@
 allowBuilds:
-  '@google/genai': true
+  "@google/genai": true
   better-sqlite3: true
   cbor-extract: true
   core-js: true
@@ -12,7 +12,7 @@ allowBuilds:
   unrs-resolver: true
 
 overrides:
-  '@vercel/eve-catalog': npm:picocolors@1.1.1
+  "@vercel/eve-catalog": npm:picocolors@1.1.1
 
 minimumReleaseAgeExclude:
   - "@ai-sdk/*"

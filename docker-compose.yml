@@ -1,0 +1,28 @@
+services:
+  beeblio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: beeblio:latest
+    container_name: beeblio
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - AGENT_URL=http://127.0.0.1:2000
+      - LOCAL_DB_PATH=/app/.beeblio/beeblio.sqlite
+    env_file:
+      - path: .env.local
+        required: false
+      - path: .env
+        required: false
+    volumes:
+      - beeblio-data:/app/.beeblio
+      - ./projects:/projects
+
+volumes:
+  beeblio-data:
+    name: beeblio-data
