@@ -4,6 +4,8 @@ Beeblio is a full-stack AI research workspace. It collaborates with you and work
 
 This is intended for a single trusted user on one computer.
 
+**Download the desktop app:** [Get Beeblio for macOS (Apple Silicon) or Windows](https://github.com/alharkan7/beeblio-oss/releases). Open the release marked **Latest** and choose the `.dmg` or `.exe` under **Assets**. Installers appear there after a release is published.
+
 ![Annotated Beeblio workspace showing the research artifact browser, document editor, and AI assistant](./public/image.png)
 
 ## What you can do
@@ -43,7 +45,7 @@ Beeblio also runs as a desktop app for Apple Silicon Macs (macOS 12 or later) an
 
 ### Install
 
-Download the installer for your computer from the Releases page of the repository that publishes the desktop app: `…-mac-arm64.dmg` for Macs with Apple Silicon, or `…-win-x64.exe` for Windows. Intel Macs are not supported. On first launch, a short welcome connects a model (your OpenRouter API key and a main model) and creates your first project, which then opens with a tour of the workspace. **Show tour** in the account menu, or **Help → Show Tour**, runs it again.
+Use the [public Releases page](https://github.com/alharkan7/beeblio-oss/releases) to download `Beeblio-<version>-mac-arm64.dmg` for a Mac with Apple Silicon or `Beeblio-<version>-win-x64.exe` for Windows. Intel Macs are not supported. On first launch, a short welcome connects a model (your OpenRouter API key and a main model) and creates your first project, which then opens with a tour of the workspace. **Show tour** in the account menu, or **Help → Show Tour**, runs it again.
 
 Beeblio checks for new versions by itself, and on **Check for Updates…** (the **Beeblio** menu on macOS, **Help** on Windows). On Windows it downloads and installs them; on macOS it says when one is available and links to it, until the app is signed.
 
@@ -97,7 +99,7 @@ pnpm --dir desktop dist
 
 The installer is written to `desktop/release/`. Run `pnpm install` again in a new shell afterwards to return to the usual layout. On Linux, `pnpm --dir desktop dist` builds an unpacked app in `desktop/release/linux-unpacked` for testing; it is not released.
 
-**Releases:** set the new version in `desktop/package.json` and push a tag such as `v0.2.0`. The [Desktop release](.github/workflows/desktop-release.yml) workflow builds both installers and attaches them to a draft GitHub Release, which you review and publish. Publishing is what offers the version to installed apps; tags such as `v0.2.0-beta.1` become prereleases, which apps never offer. It also builds them, without a release, for pushes and pull requests that change more than documentation, and when run by hand. [docs/desktop-updates.md](docs/desktop-updates.md) explains the update pipeline.
+**Releases:** set the new version in `desktop/package.json` and push a matching tag, such as `v1.0.0` for version `1.0.0`. The [Desktop release](.github/workflows/desktop-release.yml) workflow builds both installers and attaches them to a draft GitHub Release, which you review and publish. Publishing makes the installers available through the README's download link and offers the version to installed apps; tags such as `v1.0.0-beta.1` become prereleases, which apps never offer. Pushes, pull requests, and manual runs only produce temporary workflow artifacts. [docs/desktop-updates.md](docs/desktop-updates.md) explains the update pipeline.
 
 **Signing:** the workflow signs builds once these repository secrets exist, and works without them:
 

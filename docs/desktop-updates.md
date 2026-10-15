@@ -12,6 +12,10 @@ How a new version of the desktop app gets from a tag to people's computers.
 4. **Review.** Install the draft's installers on both platforms. Nobody else sees the draft yet.
 5. **Publish.** Publishing the draft hands the version to every installed app. Edit the generated notes first; the update prompt links to them.
 
+## Public downloads
+
+The [Releases page](https://github.com/alharkan7/beeblio-oss/releases) is the permanent download link in the README. Visitors choose the release marked **Latest** and download its `.dmg` or `.exe` from **Assets**. After the first stable release is published, [`releases/latest`](https://github.com/alharkan7/beeblio-oss/releases/latest) also points to it. GitHub Actions artifacts are build previews; they expire and are not the public download channel. Draft releases are for review before the installers become public.
+
 ## Channels
 
 | Tag | Release | Who gets it |
