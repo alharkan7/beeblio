@@ -56,7 +56,7 @@ describe("merged app settings", () => {
     assert.equal(appSetting("OPENROUTER_MODEL_ID"), "provider/saved");
     assert.deepEqual(settingsSnapshot().settings.OPENROUTER_API_KEY, { source: "settings", last4: "abcd" });
     assert.ok(!readFileSync(aiFile(), "utf8").includes(SAVED_KEY));
-    assert.equal(statSync(aiFile()).mode & 0o777, 0o600);
+    if (process.platform !== "win32") assert.equal(statSync(aiFile()).mode & 0o777, 0o600);
   });
 
   test("migrates desktop-preview AI settings and removes their plaintext copy", () => {
@@ -94,7 +94,7 @@ describe("merged app settings", () => {
     saveSettings({ OPENROUTER_REQUEST_TIMEOUT_MS: "250", GOOGLE_API_KEY: "google-key" });
     assert.equal(integerSetting("OPENROUTER_REQUEST_TIMEOUT_MS", 5, 1), 250);
     assert.equal(appSetting("GOOGLE_API_KEY"), "google-key");
-    assert.equal(statSync(settingsFile()).mode & 0o777, 0o600);
+    if (process.platform !== "win32") assert.equal(statSync(settingsFile()).mode & 0o777, 0o600);
     assert.throws(() => saveSettings({ OPENROUTER_API_KEY: SAVED_KEY }), /Save AI settings/);
   });
 
