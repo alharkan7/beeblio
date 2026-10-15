@@ -6,8 +6,6 @@
 /** Set by CI from repository secrets; see the README's "Signing" section. */
 const hasMacCertificate = Boolean(process.env.CSC_LINK || process.env.CSC_NAME);
 const canNotarize = Boolean(process.env.APPLE_TEAM_ID && ((process.env.APPLE_ID && process.env.APPLE_APP_SPECIFIC_PASSWORD) || process.env.APPLE_API_KEY));
-const { execFileSync } = require("node:child_process");
-const path = require("node:path");
 
 /**
  * The repository whose GitHub Releases the app updates from (owner/repo).
@@ -50,6 +48,8 @@ module.exports = {
   // DMG and ZIP are created so macOS can actually launch the app.
   afterSign: async (context) => {
     if (context.electronPlatformName !== "darwin" || hasMacCertificate) return;
+    const { execFileSync } = await import("node:child_process");
+    const path = await import("node:path");
     execFileSync("codesign", ["--force", "--deep", "--sign", "-", path.join(context.appOutDir, "Beeblio.app")], { stdio: "inherit" });
   },
   artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
