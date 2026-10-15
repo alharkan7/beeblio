@@ -93,6 +93,9 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           # Where installed apps look for updates; see docs/desktop-updates.md.
           BEEBLIO_RELEASE_REPO: ${{ vars.BEEBLIO_RELEASE_REPO || github.repository }}
+      - name: Verify macOS app signature
+        if: runner.os == 'macOS'
+        run: codesign --verify --deep --strict --verbose=2 desktop/release/mac-arm64/Beeblio.app
       - uses: actions/upload-artifact@v4
         with:
           name: beeblio-${{ runner.os }}-${{ runner.arch }}

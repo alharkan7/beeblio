@@ -43,6 +43,15 @@ module.exports = {
     enableEmbeddedAsarIntegrityValidation: true,
     onlyLoadAppFromAsar: true,
   },
+  // The unsigned CI build can leave Electron Framework's original signature
+  // invalid after fuses are applied. Re-sign the finished bundle before the
+  // DMG and ZIP are created so macOS can actually launch the app.
+  afterSign: async (context) => {
+    if (context.electronPlatformName !== "darwin" || hasMacCertificate) return;
+    const { execFileSync } = await import("node:child_process");
+    const path = await import("node:path");
+    execFileSync("codesign", ["--force", "--deep", "--sign", "-", path.join(context.appOutDir, "Beeblio.app")], { stdio: "inherit" });
+  },
   artifactName: "${productName}-${version}-${os}-${arch}.${ext}",
   mac: {
     // Apple Silicon only: the bundled Node.js and native modules are built for the Mac that builds the app.
