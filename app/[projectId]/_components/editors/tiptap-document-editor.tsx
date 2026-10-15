@@ -29,7 +29,16 @@ import {
   type DocumentDefaultSettings,
 } from "@/lib/project-settings";
 import { OPEN_LITERATURE_SEARCH_EVENT, type LiteratureItem, type OpenLiteratureSearchDetail } from "@/lib/literature/types";
-import { OPEN_WORKSPACE_FILE_EVENT, type OpenWorkspaceFileDetail } from "@/lib/chat-context";
+import {
+  OPEN_WORKSPACE_FILE_EVENT,
+  FIND_CITATION_REQUEST_EVENT,
+  APPLY_CITATION_EVENT,
+  getPendingCitationToApply,
+  setPendingCitationToApply,
+  type OpenWorkspaceFileDetail,
+  type FindCitationRequestDetail,
+  type ApplyCitationDetail,
+} from "@/lib/chat-context";
 import { BIBLIOGRAPHY_MARKER, joinBibliographyMetadata, normalizeEscapedCitations, splitBibliographyMetadata } from "@/lib/markdown-bibliography";
 import { ensureBlankLineAfterTables } from "@/lib/markdown-repair";
 import { PROJECT_BIBLIOGRAPHY_PATH } from "@/lib/project-bibliography";
@@ -443,6 +452,63 @@ export function MarkdownTiptapEditor({
       current.chain().focus().deleteRange({ from: search.from, to: search.to }).insertContent([{ type: "citation", attrs: { id: reference.id } }, { type: "text", text: " " }]).run();
     }
     setMentionSearch(null);
+  };
+
+  const appliedCitationsRef = useRef<Set<string>>(new Set());
+
+  const applyFoundCitation = useCallback((detail: ApplyCitationDetail) => {
+    if (detail.filePath !== filePathRef.current) return;
+    const current = editorRef.current;
+    if (!current || current.isDestroyed) return;
+
+    const eventKey = `${detail.citationKey}:${detail.range.from}-${detail.range.to}`;
+    if (appliedCitationsRef.current.has(eventKey)) return;
+    appliedCitationsRef.current.add(eventKey);
+
+    setPendingCitationToApply(null);
+
+    setReferences((prev) => {
+      if (!detail.reference || prev.some((r) => r.id === detail.citationKey)) return prev;
+      return [...prev, detail.reference];
+    });
+
+    current
+      .chain()
+      .focus()
+      .setTextSelection(detail.range.to)
+      .insertContent([
+        { type: "text", text: " " },
+        { type: "citation", attrs: { id: detail.citationKey } },
+      ])
+      .run();
+
+    toast.success(`Citation added: @${detail.citationKey}`);
+  }, []);
+
+  useEffect(() => {
+    const handleApply = (event: Event) => {
+      const detail = (event as CustomEvent<ApplyCitationDetail>).detail;
+      if (detail) {
+        applyFoundCitation(detail);
+      }
+    };
+    window.addEventListener(APPLY_CITATION_EVENT, handleApply);
+    return () => window.removeEventListener(APPLY_CITATION_EVENT, handleApply);
+  }, [applyFoundCitation]);
+
+  const handleRequestFindCitation = (params: { from: number; to: number; text: string }) => {
+    const trimmed = params.text.trim();
+    if (!trimmed) return;
+    window.dispatchEvent(
+      new CustomEvent<FindCitationRequestDetail>(FIND_CITATION_REQUEST_EVENT, {
+        detail: {
+          projectId,
+          draftFilePath: filePathRef.current,
+          text: trimmed,
+          range: { from: params.from, to: params.to },
+        },
+      }),
+    );
   };
 
   const insertFileMention = async (entry: FileEntry) => {
@@ -974,6 +1040,14 @@ export function MarkdownTiptapEditor({
   }, [editor]);
 
   useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    const pending = getPendingCitationToApply();
+    if (pending && pending.filePath === filePathRef.current) {
+      applyFoundCitation(pending);
+    }
+  }, [editor, applyFoundCitation]);
+
+  useEffect(() => {
     if (!editor) return;
     let clearHighlight: number | undefined;
     const revealReviewAnchor = (event: Event) => {
@@ -1123,6 +1197,7 @@ export function MarkdownTiptapEditor({
                     disabled={mentionSearch !== null}
                     getSlashDismissedFrom={() => slashDismissedFromRef.current}
                     onSlashDismissedFromChange={(from) => { slashDismissedFromRef.current = from; }}
+                    onRequestFindCitation={handleRequestFindCitation}
                     onRequestCitation={(selection) => {
                       setLiteratureMention({ results: [], searching: false, searchedQuery: null });
                       setActiveMention(0);

@@ -73,10 +73,18 @@ import {
   ASK_AGENT_EVENT,
   OPEN_WORKSPACE_FILE_EVENT,
   OPEN_WORKSPACE_FOLDER_EVENT,
+  FIND_CITATION_REQUEST_EVENT,
+  APPLY_CITATION_EVENT,
+  setPendingCitationToApply,
+  openWorkspaceEntry,
   SELECTION_MAX_CHARS,
   type OpenWorkspaceFileDetail,
   type OpenWorkspaceFolderDetail,
+  type FindCitationRequestDetail,
 } from "@/lib/chat-context";
+import { CitationReviewDock, type CitationApprovalState } from "./editors/citation-review-dock";
+import { findCitationForSelectionAction } from "../citation-finding-actions";
+import type { CitationFindMatch } from "@/lib/citation-finder";
 import { OPEN_LITERATURE_SEARCH_EVENT, type OpenLiteratureSearchDetail } from "@/lib/literature/types";
 import { PROJECT_BIBLIOGRAPHY_PATH } from "@/lib/project-bibliography";
 import { isMarkdownFilePath } from "@/lib/project-settings";
@@ -249,6 +257,7 @@ export function ProjectLayoutUI({
     previewFilePathRef.current = previewFilePath;
   }, [openFiles, activeFilePath, previewFilePath]);
   const [draggedFilePath, setDraggedFilePath] = useState<string>();
+  const [citationApprovalState, setCitationApprovalState] = useState<CitationApprovalState | null>(null);
   const [selection, setSelection] = useState<WorkspaceSelection>();
   const [pendingConversationPath, setPendingConversationPath] = useState<string>();
   const [mobileAgentHeight, setMobileAgentHeight] = useState(0);
@@ -438,6 +447,65 @@ export function ProjectLayoutUI({
     window.addEventListener(OPEN_LITERATURE_SEARCH_EVENT, openLiteratureSearch);
     return () => window.removeEventListener(OPEN_LITERATURE_SEARCH_EVENT, openLiteratureSearch);
   }, [projectId]);
+
+  useEffect(() => {
+    const handleFindCitation = async (event: Event) => {
+      const detail = (event as CustomEvent<FindCitationRequestDetail>).detail;
+      if (!detail?.text) return;
+      setCitationApprovalState({
+        isOpen: true,
+        text: detail.text,
+        range: detail.range,
+        draftFilePath: detail.draftFilePath,
+        status: "searching",
+      });
+      try {
+        const res = await findCitationForSelectionAction(projectId, detail.text);
+        if (res.found) {
+          setCitationApprovalState((prev) =>
+            prev ? { ...prev, status: "found", match: res.match, matches: res.matches } : null,
+          );
+        } else {
+          setCitationApprovalState((prev) =>
+            prev ? { ...prev, status: "not_found", error: res.message } : null,
+          );
+        }
+      } catch (err) {
+        setCitationApprovalState((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "error",
+                error: err instanceof Error ? err.message : "Failed to find citation.",
+              }
+            : null,
+        );
+      }
+    };
+    window.addEventListener(FIND_CITATION_REQUEST_EVENT, handleFindCitation);
+    return () => window.removeEventListener(FIND_CITATION_REQUEST_EVENT, handleFindCitation);
+  }, [projectId]);
+
+  const handleApproveCitation = (
+    match: CitationFindMatch,
+    range: { from: number; to: number },
+    draftFilePath: string,
+  ) => {
+    const detail = {
+      filePath: draftFilePath,
+      range,
+      citationKey: match.citationKey,
+      reference: match.reference,
+    };
+    setPendingCitationToApply(detail);
+    if (activeFilePath !== draftFilePath) {
+      openWorkspaceEntry({ path: draftFilePath });
+    }
+    window.dispatchEvent(
+      new CustomEvent(APPLY_CITATION_EVENT, { detail }),
+    );
+    setCitationApprovalState(null);
+  };
 
   // Folder mention chips in the chat reveal the folder in the File Explorer
   // rather than opening an editor tab. Like the literature handoff above, the
@@ -1749,6 +1817,12 @@ export function ProjectLayoutUI({
         onOpenFileWithCue={openFileWithCue}
       />
       <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <CitationReviewDock
+        state={citationApprovalState}
+        onClose={() => setCitationApprovalState(null)}
+        onReject={() => setCitationApprovalState(null)}
+        onApprove={handleApproveCitation}
+      />
     </WorkspaceContext.Provider>
     </MatrixTargetsProvider>
   );

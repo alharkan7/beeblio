@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { isNodeSelection, type Editor } from "@tiptap/react";
-import { ArrowUp, BookOpen, Check, PencilSparkles } from "lucide-react";
+import { ArrowUp, BookOpen, Check, PencilSparkles, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ASK_AGENT_EVENT, SELECTION_ANCHOR_MAX_CHARS, type AskAgentDetail, type ChatFileContext } from "@/lib/chat-context";
@@ -127,6 +127,7 @@ export function AskBeeblio({
   getSlashDismissedFrom,
   onSlashDismissedFromChange,
   onRequestCitation,
+  onRequestFindCitation,
 }: {
   editor: Editor | null;
   filePath: string;
@@ -135,6 +136,7 @@ export function AskBeeblio({
   getSlashDismissedFrom?: () => number | null;
   onSlashDismissedFromChange?: (from: number | null) => void;
   onRequestCitation?: (selection: { from: number; to: number; left: number; top: number }) => void;
+  onRequestFindCitation?: (selection: { from: number; to: number; text: string }) => void;
 }) {
   const [trigger, setTrigger] = useState<AskTrigger | null>(null);
   const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
@@ -408,7 +410,8 @@ export function AskBeeblio({
         setAnchor(null);
         return;
       }
-      const menuHeight = onRequestCitation ? BUTTON_HEIGHT * 2 : BUTTON_HEIGHT;
+      const menuItemsCount = 1 + (onRequestFindCitation ? 1 : 0) + (onRequestCitation ? 1 : 0);
+      const menuHeight = BUTTON_HEIGHT * menuItemsCount;
       const multiClick = multiClickAnchorRef.current;
       const pointer = multiClick?.from === current.from && multiClick.to === current.to
         ? multiClick
@@ -740,6 +743,28 @@ export function AskBeeblio({
           <PencilSparkles className="size-3.5 text-primary" />
           Beeblio AI
         </button>
+        {isTextSelection && onRequestFindCitation ? (
+          <button
+            type="button"
+            className="flex h-8 items-center gap-1.5 border-t px-2.5 text-left transition-colors hover:bg-accent"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              const current = triggerRef.current;
+              if (!editor || !current || current.kind !== "selection") return;
+              const text = editor.state.doc.textBetween(current.from, current.to, " ");
+              onRequestFindCitation({
+                from: current.from,
+                to: current.to,
+                text,
+              });
+              hide();
+            }}
+            title="Find citation from bibliography knowledge base"
+          >
+            <Sparkles className="size-3.5 text-primary" />
+            Find citation
+          </button>
+        ) : null}
         {isTextSelection && onRequestCitation ? (
           <button
             type="button"

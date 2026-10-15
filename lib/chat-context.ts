@@ -89,6 +89,32 @@ export const SKILLS_CHANGED_EVENT = "beeblio:skills-changed";
 // on page mount.
 export const AGENT_PANEL_OPENED_EVENT = "beeblio:agent-panel-opened";
 export const NEW_CONVERSATION_EVENT = "beeblio:new-conversation";
+export const FIND_CITATION_REQUEST_EVENT = "beeblio:find-citation-request";
+export const APPLY_CITATION_EVENT = "beeblio:apply-citation";
+
+export type FindCitationRequestDetail = {
+  projectId: string;
+  draftFilePath: string;
+  text: string;
+  range: { from: number; to: number };
+};
+
+export type ApplyCitationDetail = {
+  filePath: string;
+  range: { from: number; to: number };
+  citationKey: string;
+  reference: any;
+};
+
+let pendingCitationToApply: ApplyCitationDetail | null = null;
+
+export function setPendingCitationToApply(detail: ApplyCitationDetail | null) {
+  pendingCitationToApply = detail;
+}
+
+export function getPendingCitationToApply(): ApplyCitationDetail | null {
+  return pendingCitationToApply;
+}
 
 export type OpenWorkspaceFileDetail = {
   name: string;
