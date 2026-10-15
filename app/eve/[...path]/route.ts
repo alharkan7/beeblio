@@ -23,11 +23,15 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   const headers = new Headers(req.headers);
   for (const name of ["host", "cookie", "transfer-encoding", "content-length", "connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade", "accept-encoding", "x-credit-reservation-id", "x-credit-execution-class", "x-beeblio-model-source", "x-beeblio-model-id", "x-beeblio-model-context-window-tokens", "x-beeblio-app-session-id", "x-turn-model-deadline-at"]) headers.delete(name);
   headers.set("authorization", `Bearer ${mintAgentToken(user.id)}`);
-  const chatModel = await getAiTaskConfig("chat");
-  if (!chatModel.apiKey || !chatModel.modelId) return new Response("Chat model is not configured", { status: 503 });
-  headers.set("x-model-source", "local");
-  headers.set("x-model-id", chatModel.modelId);
-  headers.set("x-model-context-window-tokens", String(chatModel.contextLength));
+  // Startup probes this route before onboarding has configured a model.
+  // Only agent turns need model settings; health must reflect server readiness.
+  if (targetPath !== "v1/health") {
+    const chatModel = await getAiTaskConfig("chat");
+    if (!chatModel.apiKey || !chatModel.modelId) return new Response("Chat model is not configured", { status: 503 });
+    headers.set("x-model-source", "local");
+    headers.set("x-model-id", chatModel.modelId);
+    headers.set("x-model-context-window-tokens", String(chatModel.contextLength));
+  }
 
   if (targetPath === "v1/session" && req.method === "POST") {
     const appSessionId = req.headers.get("x-beeblio-app-session-id")?.trim();
