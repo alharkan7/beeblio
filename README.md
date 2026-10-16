@@ -25,7 +25,7 @@ The project [session page](./app/%5BprojectId%5D/%5B%5B...sessionId%5D%5D/page.t
 - Bash and Python 3 for local agent commands and analysis
 - Optional: LibreOffice (`soffice`) for agent-assisted Office-to-PDF conversion; other command-line tools and Python packages for the workflows you want to run
 
-In the browser, the folder picker uses macOS's native chooser; on other systems, enter an existing absolute folder path in the project form. The [desktop app](#desktop-app) has a native folder picker on every platform.
+In the browser, the folder picker supports native folder selection on macOS, Windows, and Linux (with zenity or kdialog); on any system, you can also paste an existing absolute folder path in the project form. The [desktop app](#desktop-app) has a native folder picker on every platform.
 
 ## Run locally
 

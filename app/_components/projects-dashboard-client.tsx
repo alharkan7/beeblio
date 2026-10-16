@@ -28,7 +28,7 @@ interface RecentSession {
 }
 
 function formatActivityDate(value: Date) {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: new Date(value).getFullYear() === new Date().getFullYear() ? undefined : "numeric",
@@ -186,7 +186,7 @@ export function ProjectsDashboardClient({
                 <p className="mt-2 line-clamp-2 min-w-0 text-sm font-semibold leading-5">{session.title || "Untitled conversation"}</p>
                 <div className="mt-auto flex items-center justify-between gap-2 pt-2 text-[10px] text-muted-foreground">
                   <span className="truncate font-medium">{session.projectName}</span>
-                  <span className="shrink-0">{formatActivityDate(session.lastActiveAt)}</span>
+                  <span className="shrink-0" suppressHydrationWarning>{formatActivityDate(session.lastActiveAt)}</span>
                 </div>
               </Link>
             ))}
@@ -240,7 +240,7 @@ export function ProjectsDashboardClient({
               <CardContent className="pointer-events-none relative z-[1] flex flex-1 flex-col px-6 pb-5">
                 {project.description && <ProjectDescription project={project} />}
                 <div className="mt-auto flex items-center justify-between gap-3 border-t pt-3 text-[11px] text-muted-foreground">
-                  <span className="flex items-center gap-1.5"><Clock3 className="size-3" /> {formatActivityDate(project.updatedAt)}</span>
+                  <span className="flex items-center gap-1.5" suppressHydrationWarning><Clock3 className="size-3" /> {formatActivityDate(project.updatedAt)}</span>
                   <span className="flex items-center gap-1 font-semibold text-foreground">Open <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" /></span>
                 </div>
               </CardContent>
