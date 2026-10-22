@@ -2,20 +2,27 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { promises as fs } from "node:fs";
 import { getUser } from "@/lib/auth/session";
+import { selectFolderLinux } from "@/lib/folder-picker-linux";
 
 const execFileAsync = promisify(execFile);
 export const runtime = "nodejs";
 
 async function selectFolderDarwin(): Promise<string | null> {
-  const { stdout } = await execFileAsync(
-    "osascript",
-    [
-      "-e",
-      'POSIX path of (choose folder with prompt "Choose a Beeblio project folder")',
-    ],
-    { timeout: 120000 },
-  );
-  return stdout.trim() || null;
+  try {
+    const { stdout } = await execFileAsync(
+      "osascript",
+      [
+        "-e",
+        'POSIX path of (choose folder with prompt "Choose a Beeblio project folder")',
+      ],
+      { timeout: 120000 },
+    );
+    return stdout.trim() || null;
+  } catch (error) {
+    // AppleScript reports the user cancelling the chooser as error -128.
+    if ((error as { stderr?: string } | null)?.stderr?.includes("(-128)")) return null;
+    throw error;
+  }
 }
 
 async function selectFolderWindows(): Promise<string | null> {
@@ -86,36 +93,6 @@ async function selectFolderWindows(): Promise<string | null> {
   return stdout.trim() || null;
 }
 
-async function selectFolderLinux(): Promise<string | null> {
-  try {
-    const { stdout } = await execFileAsync(
-      "zenity",
-      [
-        "--file-selection",
-        "--directory",
-        "--title=Choose a Beeblio project folder",
-      ],
-      { timeout: 120000 },
-    );
-    return stdout.trim() || null;
-  } catch {
-    try {
-      const { stdout } = await execFileAsync(
-        "kdialog",
-        [
-          "--getexistingdirectory",
-          "--title",
-          "Choose a Beeblio project folder",
-        ],
-        { timeout: 120000 },
-      );
-      return stdout.trim() || null;
-    } catch {
-      throw new Error("Folder selection requires zenity or kdialog on Linux");
-    }
-  }
-}
-
 export async function POST() {
   if (!(await getUser()))
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -148,9 +125,9 @@ export async function POST() {
     return Response.json(
       {
         error:
-          error instanceof Error ? error.message : "Folder selection cancelled",
+          error instanceof Error ? error.message : "Could not open the folder picker",
       },
-      { status: 400 },
+      { status: 500 },
     );
   }
 }
