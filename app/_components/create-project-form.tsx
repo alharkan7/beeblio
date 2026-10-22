@@ -17,18 +17,37 @@ import { Textarea } from "@/components/ui/textarea";
 export function CreateProjectForm({ customTrigger }: { customTrigger?: React.ReactNode }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [selectingFolder, setSelectingFolder] = useState(false);
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
   const [folderPath, setFolderPath] = useState("");
-  async function chooseFolder() {
-    if (window.beeblioDesktop) {
-      const selected = await window.beeblioDesktop.selectFolder();
-      if (selected) setFolderPath(selected);
-      return;
+
+  function applySelectedFolder(selected: string) {
+    setFolderPath(selected);
+    if (!name.trim()) {
+      const folderName = selected.split(/[/\\]/).filter(Boolean).pop();
+      if (folderName) setName(folderName);
     }
-    const response = await fetch("/api/projects/select-folder", { method: "POST" });
-    const result = await response.json();
-    if (response.ok && typeof result.folderPath === "string") setFolderPath(result.folderPath);
-    else if (result.error && response.status !== 400) alert(result.error);
+  }
+
+  async function chooseFolder() {
+    setSelectingFolder(true);
+    try {
+      if (window.beeblioDesktop) {
+        const selected = await window.beeblioDesktop.selectFolder();
+        if (selected) applySelectedFolder(selected);
+        return;
+      }
+      const response = await fetch("/api/projects/select-folder", { method: "POST" });
+      const result = await response.json();
+      if (response.ok && typeof result.folderPath === "string") {
+        applySelectedFolder(result.folderPath);
+      } else if (result.error && response.status !== 400) {
+        alert(result.error);
+      }
+    } finally {
+      setSelectingFolder(false);
+    }
   }
   
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -64,7 +83,13 @@ export function CreateProjectForm({ customTrigger }: { customTrigger?: React.Rea
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      setOpen(nextOpen);
+      if (!nextOpen) {
+        setName("");
+        setFolderPath("");
+      }
+    }}>
       <DialogTrigger asChild>
         {customTrigger ? customTrigger : (
           <Button className="h-10 shrink-0 whitespace-nowrap shadow-sm">
@@ -86,13 +111,36 @@ export function CreateProjectForm({ customTrigger }: { customTrigger?: React.Rea
             <label htmlFor="name" className="text-sm font-medium">
               Project Name
             </label>
-            <Input id="name" name="name" placeholder="e.g. Urban heat and public health" required disabled={loading} />
+            <Input
+              id="name"
+              name="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Urban heat and public health"
+              required
+              disabled={loading || selectingFolder}
+            />
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="folderPath" className="text-sm font-medium">Project folder</label>
             <div className="flex gap-2">
-              <Input id="folderPath" name="folderPath" value={folderPath} onChange={(event) => setFolderPath(event.target.value)} placeholder="/absolute/path/to/folder" required disabled={loading} />
-              <Button type="button" variant="outline" onClick={chooseFolder} disabled={loading}>Browse</Button>
+              <Input
+                id="folderPath"
+                name="folderPath"
+                value={folderPath}
+                onChange={(event) => setFolderPath(event.target.value)}
+                placeholder="/absolute/path/to/folder"
+                required
+                disabled={loading || selectingFolder}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={chooseFolder}
+                disabled={loading || selectingFolder}
+              >
+                {selectingFolder ? <Loader2 className="h-4 w-4 animate-spin" /> : "Browse"}
+              </Button>
             </div>
             {/* <p className="text-xs text-muted-foreground">Files stay here. Missing research folders, references.bib, and the literature matrix are created without replacing existing files.</p> */}
           </div>
