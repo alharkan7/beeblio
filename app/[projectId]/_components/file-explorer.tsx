@@ -1275,12 +1275,12 @@ export function FileExplorer({
               </div>
               {!isSearching && cwd === "" && file.isDir ? (
                 rootTreeChildren[file.path] ? (
-                  rootTreeChildren[file.path].filter((child) => child.isDir).map((child) => (
+                  rootTreeChildren[file.path].filter((child) => child.isDir).map((child, index) => (
                     <button
                       key={child.path}
                       type="button"
                       className={cn(
-                        "group ml-5 flex min-w-0 items-center gap-2 rounded-md border-l border-border/70 py-1.5 pl-3 pr-2 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
+                        "group relative ml-5 flex min-w-0 items-center gap-2 rounded-md py-1.5 pl-3 pr-2 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
                         dropTargetPath === child.path && "bg-primary/10 text-primary ring-1 ring-inset ring-primary/40",
                       )}
                       onClick={() => enterFolder(child)}
@@ -1292,13 +1292,15 @@ export function FileExplorer({
                       }}
                       onDrop={(event) => dropOnFolder(event, child)}
                     >
+                      <SubfolderBranchConnector index={index} />
                       <Folder className="size-3.5 shrink-0 text-blue-500/80" />
                       <span className="min-w-0 flex-1 truncate">{child.name}</span>
                       <ChevronRight className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
                     </button>
                   ))
                 ) : (
-                  <div className="ml-5 flex h-7 items-center gap-2 border-l border-border/70 pl-3 text-[11px] text-muted-foreground/70">
+                  <div className="relative ml-5 flex h-7 items-center gap-2 pl-3 text-[11px] text-muted-foreground/70">
+                    <SubfolderBranchConnector index={0} />
                     <Loader2 className="size-3 animate-spin" /> Loading folders
                   </div>
                 )
@@ -1530,6 +1532,21 @@ export function FileExplorer({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+// Curved branch tying a root-level folder to one of its subfolder rows: the
+// stem rises to the parent row's bottom edge (index sibling rows up — rows are
+// uniform height with 2px gaps) and elbows right into this row's middle.
+// Sibling rows each carry their own connector from that same origin, so
+// together they read as one trunk branching off to every subfolder.
+function SubfolderBranchConnector({ index }: { index: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute bottom-1/2 left-0 w-3 rounded-bl-[10px] border-b border-l border-border/70"
+      style={{ height: `calc(${index * 100 + 50}% + ${(index + 1) * 2}px)` }}
+    />
   );
 }
 

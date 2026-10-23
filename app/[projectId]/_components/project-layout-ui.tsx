@@ -92,6 +92,7 @@ import type { SkillSummary } from "../skill-actions";
 import { uploadWorkspaceFile } from "@/lib/workspace-upload";
 import { FileNameInput, splitFileName } from "./file-name-input";
 import { FileExplorer } from "./file-explorer";
+import { PanelResizeHandle } from "./panel-resize-handle";
 import { announceFormCreated, createFormInFormsFolder, FORMS_DIRECTORY } from "./form-creation";
 import { KnowledgePanel } from "./knowledge-panel";
 import { FileViewer } from "./file-viewer";
@@ -176,6 +177,31 @@ const customFileTypes = [
 
 type CustomFileExtension = (typeof customFileTypes)[number]["extension"];
 
+// Sidebar resize bounds (px). Dragging the navigation divider narrower with
+// the rail expanded takes the rail down to RAIL_WIDTH_MIN first (labels
+// truncate, they never clip), collapses it to icons below that, and only then
+// shrinks the navigation panel itself down to NAV_WIDTH_MIN.
+const RAIL_WIDTH_MAX = 176;
+const RAIL_WIDTH_MIN = 136;
+const NAV_WIDTH_DEFAULT = 256;
+const NAV_WIDTH_MIN = 200;
+const NAV_WIDTH_MAX = 520;
+const AGENT_WIDTH_DEFAULT = 380;
+const AGENT_WIDTH_MIN = 320;
+const AGENT_WIDTH_MAX = 640;
+
+const RAIL_WIDTH_STORAGE_KEY = "beeblio:workspace-rail-width";
+const NAV_WIDTH_STORAGE_KEY = "beeblio:workspace-nav-width";
+const AGENT_WIDTH_STORAGE_KEY = "beeblio:workspace-agent-width";
+
+const clampWidth = (width: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, width));
+
+const readStoredWidth = (key: string, fallback: number, min: number, max: number) => {
+  const parsed = Number.parseFloat(window.localStorage.getItem(key) ?? "");
+  return Number.isFinite(parsed) ? clampWidth(parsed, min, max) : fallback;
+};
+
 export function ProjectLayoutUI({
   projectId,
   projectName,
@@ -216,6 +242,11 @@ export function ProjectLayoutUI({
   const [literatureSearchRequest, setLiteratureSearchRequest] = useState<{ query: string } | null>(null);
   const [folderRevealRequest, setFolderRevealRequest] = useState<{ path: string } | null>(null);
   const [railExpanded, setRailExpanded] = useState(false);
+  // Sidebar widths (desktop only); the rail's applies while it is expanded.
+  const [railWidth, setRailWidth] = useState(RAIL_WIDTH_MAX);
+  const [navWidth, setNavWidth] = useState(NAV_WIDTH_DEFAULT);
+  const [agentWidth, setAgentWidth] = useState(AGENT_WIDTH_DEFAULT);
+  const [resizingPanel, setResizingPanel] = useState<"nav" | "agent" | null>(null);
   const [railTooltipActivity, setRailTooltipActivity] = useState<Activity>();
   const [conversationHistoryOpen, setConversationHistoryOpen] = useState(false);
   const [conversationQuery, setConversationQuery] = useState("");
@@ -385,6 +416,26 @@ export function ProjectLayoutUI({
 
   useEffect(() => {
     setRailExpanded(window.localStorage.getItem("beeblio:workspace-rail-expanded") === "true");
+    // Cap remembered widths against the viewport so a width saved on a large
+    // screen cannot swallow the editor on a smaller one.
+    const viewportCap = window.innerWidth * 0.4;
+    const rail = readStoredWidth(RAIL_WIDTH_STORAGE_KEY, RAIL_WIDTH_MAX, RAIL_WIDTH_MIN, RAIL_WIDTH_MAX);
+    const nav = clampWidth(
+      Math.min(readStoredWidth(NAV_WIDTH_STORAGE_KEY, NAV_WIDTH_DEFAULT, NAV_WIDTH_MIN, NAV_WIDTH_MAX), viewportCap),
+      NAV_WIDTH_MIN,
+      NAV_WIDTH_MAX,
+    );
+    const agent = clampWidth(
+      Math.min(readStoredWidth(AGENT_WIDTH_STORAGE_KEY, AGENT_WIDTH_DEFAULT, AGENT_WIDTH_MIN, AGENT_WIDTH_MAX), viewportCap),
+      AGENT_WIDTH_MIN,
+      AGENT_WIDTH_MAX,
+    );
+    railWidthRef.current = rail;
+    navWidthRef.current = nav;
+    agentWidthRef.current = agent;
+    setRailWidth(rail);
+    setNavWidth(nav);
+    setAgentWidth(agent);
   }, []);
 
   // The workspace is a full-screen application shell: scrolling happens inside
@@ -394,6 +445,85 @@ export function ProjectLayoutUI({
   useEffect(() => {
     document.body.classList.add("workspace-fullscreen");
     return () => document.body.classList.remove("workspace-fullscreen");
+  }, []);
+
+  // Resize math reads these refs rather than state: pointermove is a
+  // continuous event and React does not guarantee a render between two of
+  // them, so a state-reading handler can drop deltas mid-drag.
+  const railWidthRef = useRef(railWidth);
+  const navWidthRef = useRef(navWidth);
+  const agentWidthRef = useRef(agentWidth);
+  const railExpandedRef = useRef(railExpanded);
+
+  useEffect(() => {
+    railWidthRef.current = railWidth;
+    navWidthRef.current = navWidth;
+    agentWidthRef.current = agentWidth;
+    railExpandedRef.current = railExpanded;
+  }, [railWidth, navWidth, agentWidth, railExpanded]);
+
+  // Persisted shortly after the last change so pointer drags do not write on
+  // every frame.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(RAIL_WIDTH_STORAGE_KEY, String(railWidth));
+        window.localStorage.setItem(NAV_WIDTH_STORAGE_KEY, String(navWidth));
+        window.localStorage.setItem(AGENT_WIDTH_STORAGE_KEY, String(agentWidth));
+      } catch {
+        // Blocked or full storage keeps the widths for this visit.
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [railWidth, navWidth, agentWidth]);
+
+  const resizeNavPanel = useCallback((delta: number) => {
+    if (delta === 0) return;
+    if (delta > 0) {
+      let remaining = delta;
+      // Widening grows the rail back toward its full width before the panel —
+      // the mirror of the shrink order below.
+      if (railExpandedRef.current) {
+        const railGrow = Math.min(remaining, RAIL_WIDTH_MAX - railWidthRef.current);
+        if (railGrow > 0) {
+          railWidthRef.current += railGrow;
+          setRailWidth(railWidthRef.current);
+          remaining -= railGrow;
+        }
+      }
+      if (remaining > 0) {
+        navWidthRef.current = clampWidth(navWidthRef.current + remaining, NAV_WIDTH_MIN, NAV_WIDTH_MAX);
+        setNavWidth(navWidthRef.current);
+      }
+      return;
+    }
+    let shrink = -delta;
+    // Narrower with the rail expanded: shrink the rail down to its minimum
+    // (labels truncate, they never clip), then collapse it to icon-only;
+    // beyond that point the drag shrinks the navigation panel itself.
+    if (railExpandedRef.current) {
+      const railShrink = Math.min(shrink, railWidthRef.current - RAIL_WIDTH_MIN);
+      if (railShrink > 0) {
+        railWidthRef.current -= railShrink;
+        setRailWidth(railWidthRef.current);
+        shrink -= railShrink;
+      }
+      if (shrink > 0 && railWidthRef.current <= RAIL_WIDTH_MIN) {
+        railExpandedRef.current = false;
+        setRailExpanded(false);
+        window.localStorage.setItem("beeblio:workspace-rail-expanded", "false");
+      }
+    }
+    if (shrink > 0) {
+      navWidthRef.current = clampWidth(navWidthRef.current - shrink, NAV_WIDTH_MIN, NAV_WIDTH_MAX);
+      setNavWidth(navWidthRef.current);
+    }
+  }, []);
+
+  const resizeAgentPanel = useCallback((delta: number) => {
+    if (delta === 0) return;
+    agentWidthRef.current = clampWidth(agentWidthRef.current + delta, AGENT_WIDTH_MIN, AGENT_WIDTH_MAX);
+    setAgentWidth(agentWidthRef.current);
   }, []);
 
   useEffect(() => {
@@ -1079,12 +1209,14 @@ export function ProjectLayoutUI({
         <aside
           data-expanded={!isMobile && railExpanded}
           className={cn(
-            "workspace-rail z-50 flex shrink-0 flex-col border-r bg-sidebar pt-2 transition-[width] duration-200",
+            "workspace-rail z-50 flex shrink-0 flex-col border-r bg-sidebar pt-2",
+            resizingPanel === "nav" ? "transition-none" : "transition-[width] duration-200",
             isMobile || !railExpanded ? "w-12 items-center" : "w-44 items-stretch",
             isMobile
               ? "pb-[max(2.5rem,calc(0.5rem+env(safe-area-inset-bottom)))]"
               : "pb-2",
           )}
+          style={!isMobile && railExpanded ? { width: railWidth } : undefined}
         >
           <Brand
             href="/workspace"
@@ -1225,9 +1357,11 @@ export function ProjectLayoutUI({
         <aside
           className={cn(
             "z-40 flex shrink-0 flex-col overflow-hidden border-r bg-sidebar transition-[width,transform] duration-200",
-            isMobile ? "fixed inset-y-0 left-12 w-[min(82vw,320px)] shadow-xl" : navigationOpen ? "w-64" : "w-0 border-r-0",
+            resizingPanel === "nav" && "transition-none",
+            isMobile ? "fixed inset-y-0 left-12 w-[min(82vw,320px)] shadow-xl" : navigationOpen ? "" : "w-0 border-r-0",
             isMobile && !navigationOpen && "-translate-x-[110%]",
           )}
+          style={!isMobile && navigationOpen ? { width: navWidth } : undefined}
         >
           <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
             <ProjectSwitcher projectId={projectId} projectName={projectName} initialProjects={initialSwitcherProjects} />
@@ -1260,6 +1394,19 @@ export function ProjectLayoutUI({
             />
           </div>
         </aside>
+
+        {!isMobile && navigationOpen ? (
+          <PanelResizeHandle
+            panelSide="left"
+            label="Resize navigation sidebar"
+            value={navWidth}
+            active={resizingPanel === "nav"}
+            className="-ml-[3px]"
+            onResize={resizeNavPanel}
+            onResizeStart={() => setResizingPanel("nav")}
+            onResizeEnd={() => setResizingPanel(null)}
+          />
+        ) : null}
 
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <div className="flex h-12 shrink-0 items-end border-b bg-muted/45 pt-1.5">
@@ -1452,6 +1599,19 @@ export function ProjectLayoutUI({
           </footer>
         </main>
 
+        {!isMobile && (agentOpen || reviewOpen) ? (
+          <PanelResizeHandle
+            panelSide="right"
+            label="Resize assistant panel"
+            value={agentWidth}
+            active={resizingPanel === "agent"}
+            className="-mr-[3px]"
+            onResize={resizeAgentPanel}
+            onResizeStart={() => setResizingPanel("agent")}
+            onResizeEnd={() => setResizingPanel(null)}
+          />
+        ) : null}
+
         {isMobile && (agentOpen || reviewOpen) ? (
           <button
             className="fixed inset-0 z-[55] bg-black/20"
@@ -1467,14 +1627,17 @@ export function ProjectLayoutUI({
               ? "fixed right-0 bottom-0 left-0 z-[60] rounded-t-2xl border border-b-0 shadow-2xl transition-transform duration-300 ease-out"
               : cn(
                 "z-40 border-l transition-[width,transform] duration-200",
-                agentOpen || reviewOpen ? "w-[380px]" : "w-0 border-l-0",
+                resizingPanel === "agent" && "transition-none",
+                agentOpen || reviewOpen ? "" : "w-0 border-l-0",
               ),
             isMobile && !agentOpen && !reviewOpen && "translate-y-[calc(100%+1rem)]",
           )}
           style={
             isMobile
               ? { height: mobileAgentHeight || "72dvh", maxHeight: "calc(100dvh - 1rem)" }
-              : undefined
+              : agentOpen || reviewOpen
+                ? { width: agentWidth }
+                : undefined
           }
         >
           {isMobile ? (
