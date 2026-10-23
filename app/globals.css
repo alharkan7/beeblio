@@ -343,10 +343,19 @@ body.workspace-fullscreen {
   font-variant-numeric: tabular-nums;
 }
 
+/* Streamdown sizes its headings for a standalone document (h1 = text-3xl);
+   against the chat's 0.875rem body text one stray `#` line dwarfs everything
+   around it. Keep headings near body size, reserving one step of hierarchy. */
 .agent-chat-markdown :is(h1, h2, h3, h4, h5, h6) {
   margin-block: 0.85rem 0.35rem;
   line-height: 1.3;
   text-wrap: balance;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.agent-chat-markdown h1 {
+  font-size: 1.125rem;
 }
 
 .agent-chat-markdown a {

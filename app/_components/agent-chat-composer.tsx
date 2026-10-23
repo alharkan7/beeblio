@@ -655,7 +655,7 @@ function HighlightedMentions({
   if (!tokens.length) return text;
 
   const pattern = new RegExp(
-    `(${tokens.map(escapeRegExp).join("|")})(?=\\s|$)`,
+    `(${tokens.map(escapeRegExp).join("|")})(?![\\w/-])`,
     "g",
   );
   return text.split(pattern).map((part, index) => {
@@ -738,7 +738,7 @@ export function normalizeInlineSkillMentions(text: string, slugs: string[]) {
 }
 
 export function containsSkillMention(text: string, slug: string) {
-  return new RegExp(`/${escapeRegExp(slug)}(?=\\s|$)`).test(text);
+  return new RegExp(`/${escapeRegExp(slug)}(?![\\w/-])`).test(text);
 }
 
 /**

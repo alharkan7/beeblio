@@ -56,7 +56,7 @@ export type ChatSelectionContext = {
  * structured rather than inferred from the user's prose: an inline command is
  * an editing surface, while a composer message is normally conversational. */
 export type ChatInteractionContext = {
-  origin: "inline-slash" | "inline-caret" | "inline-selection" | "inline-image" | "matrix-action";
+  origin: "inline-slash" | "inline-caret" | "inline-selection" | "inline-image" | "matrix-action" | "file-action";
   intent: "insert-at-caret" | "contextual-selection" | "contextual-image" | "contextual-file";
   targetFilePath: string;
 };

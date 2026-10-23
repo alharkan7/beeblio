@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  BookMarked, ChevronRight, Copy, Download, Edit2, Folder, FolderInput, Loader2,
+  BookMarked, ChartColumn, ChevronRight, Copy, Download, Edit2, Folder, FolderInput, Loader2,
   MoreVertical, Paperclip, Share2, Table2, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,7 +18,11 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ADD_FILE_TO_CHAT_EVENT } from "@/lib/chat-context";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ADD_FILE_TO_CHAT_EVENT, ASK_AGENT_EVENT } from "@/lib/chat-context";
+import { fileMentionToken } from "@/app/_components/agent-chat-composer";
+import { isDataFileName } from "@/lib/data-files";
 import { affectsProtectedWorkspacePath } from "@/lib/protected-workspace";
 import { cn } from "@/lib/utils";
 import {
@@ -67,6 +71,8 @@ export function WorkspaceFileActions({
   const [folderPath, setFolderPath] = useState("");
   const [folders, setFolders] = useState<FileEntry[]>([]);
   const [loadingFolders, setLoadingFolders] = useState(false);
+  const [analyzeOpen, setAnalyzeOpen] = useState(false);
+  const [analyzeFocus, setAnalyzeFocus] = useState("");
 
   const changed = () => window.dispatchEvent(new CustomEvent("beeblio:workspace-changed"));
 
@@ -235,6 +241,28 @@ export function WorkspaceFileActions({
     }
   };
 
+  // Mirrors the matrix editor's "ask Beeblio AI" actions: the full path rides
+  // in the context payload, while the prompt names the file through the same
+  // token the composer's @-mention inserts, so submit normalizes it and the
+  // chat renders an inline mention chip exactly like a manual mention.
+  const analyze = () => {
+    const focus = analyzeFocus.trim();
+    window.dispatchEvent(new CustomEvent(ASK_AGENT_EVENT, {
+      detail: {
+        text: focus
+          ? `Analyze ${fileMentionToken(file.path)}: ${focus}.`
+          : `Analyze ${fileMentionToken(file.path)}. Report the dataset's structure (rows, columns, data types), summary statistics, missing values, and any notable patterns or anomalies.`,
+        files: [{ path: file.path, kind: "mention" }],
+        interaction: {
+          origin: "file-action",
+          intent: "contextual-file",
+          targetFilePath: file.path,
+        },
+      },
+    }));
+    setAnalyzeOpen(false);
+  };
+
   const remove = async () => {
     setBusy(true);
     try {
@@ -274,6 +302,10 @@ export function WorkspaceFileActions({
             toast.success(`${file.name} added to chat context`);
           }}
           ><Paperclip />Add to Chat</DropdownMenuItem>
+          {!file.isDir && isDataFileName(file.name) ? <DropdownMenuItem onClick={() => {
+            setAnalyzeFocus("");
+            setAnalyzeOpen(true);
+          }}><ChartColumn />Analyze</DropdownMenuItem> : null}
           {!file.isDir && acceptsKnowledgeFile(file.name) ? <DropdownMenuItem
           //  onClick={() => notifyUpcomingFeature("Add to Knowledge")}
           onClick={() => void addToKnowledge()}
@@ -308,6 +340,43 @@ export function WorkspaceFileActions({
             <DialogDescription>Anyone with the public link can view this file.</DialogDescription>
           </DialogHeader>
           <ShareFileControls projectId={projectId} filePath={file.path} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={analyzeOpen} onOpenChange={setAnalyzeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Analyze with Beeblio AI</DialogTitle>
+          </DialogHeader>
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              analyze();
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="workspace-analyze-focus">Question (Optional)</Label>
+              <Textarea
+                id="workspace-analyze-focus"
+                value={analyzeFocus}
+                onChange={(event) => setAnalyzeFocus(event.target.value)}
+                onKeyDown={(event) => {
+                  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                    event.preventDefault();
+                    analyze();
+                  }
+                }}
+                placeholder="e.g. what drives the response rate, and where are values missing?"
+                rows={3}
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" type="button" onClick={() => setAnalyzeOpen(false)}>Cancel</Button>
+              <Button type="submit"><ChartColumn />Analyze</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

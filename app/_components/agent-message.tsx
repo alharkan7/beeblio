@@ -730,7 +730,7 @@ function InlineMentionMessage({ context, text }: { context: ChatContext; text: s
   const pattern = new RegExp(
     `(${tokens.map((token) => token.startsWith("@")
       ? escapeRegExp(token)
-      : `(?<!\\S)${escapeRegExp(token)}`).join("|")})(?=\\s|$)`,
+      : `(?<!\\S)${escapeRegExp(token)}`).join("|")})(?![\\w/-])`,
     "g",
   );
 
@@ -920,14 +920,19 @@ function withoutBlockedIndicator(children: ReactNode): ReactNode | undefined {
   return children;
 }
 
+// A mention token may butt directly against sentence punctuation
+// ("survey.csv.", "data/survey.csv:") — only a character that could extend
+// the name (word char, path separator, hyphen) disqualifies a match, so the
+// chip renders mid-sentence too instead of degrading to a detached context
+// chip plus plain text.
 function containsFileMention(text: string, path: string) {
   return new RegExp(
-    `(?:@${escapeRegExp(path)}|(?:^|\\s)${escapeRegExp(fileName(path))})(?=\\s|$)`,
+    `(?:@${escapeRegExp(path)}|(?:^|\\s)${escapeRegExp(fileName(path))})(?![\\w/-])`,
   ).test(text);
 }
 
 function containsSkillMention(text: string, slug: string) {
-  return new RegExp(`(?:^|\\s)/${escapeRegExp(slug)}(?=\\s|$)`).test(text);
+  return new RegExp(`(?:^|\\s)/${escapeRegExp(slug)}(?![\\w/-])`).test(text);
 }
 
 function fileName(path: string) {
