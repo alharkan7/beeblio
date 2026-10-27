@@ -190,6 +190,9 @@ export async function getInitialWorkspaceListing(projectId: string): Promise<{ r
       if (!parent) entries.push(entry);
       else if (!parent.includes("/")) (children[parent] ??= []).push(entry);
     }
+    for (const entry of entries) {
+      if (entry.isDir) children[entry.path] ??= [];
+    }
     return { rootTree: { entries, children }, allFiles };
   } catch (error) {
     console.error("[getInitialWorkspaceListing] local workspace failed", error);

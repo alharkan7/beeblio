@@ -1274,8 +1274,7 @@ export function FileExplorer({
                 ) : null}
               </div>
               {!isSearching && cwd === "" && file.isDir ? (
-                rootTreeChildren[file.path] ? (
-                  rootTreeChildren[file.path].filter((child) => child.isDir).map((child, index) => (
+                (rootTreeChildren[file.path] ?? []).filter((child) => child.isDir).map((child, index) => (
                     <button
                       key={child.path}
                       type="button"
@@ -1298,12 +1297,6 @@ export function FileExplorer({
                       <ChevronRight className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-60" />
                     </button>
                   ))
-                ) : (
-                  <div className="relative ml-5 flex h-7 items-center gap-2 pl-3 text-[11px] text-muted-foreground/70">
-                    <SubfolderBranchConnector index={0} />
-                    <Loader2 className="size-3 animate-spin" /> Loading folders
-                  </div>
-                )
               ) : null}
               </Fragment>
               );
