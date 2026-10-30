@@ -1,5 +1,9 @@
 # Beeblio
 
+<p align="center"><a href="https://neon.com"><img src="./public/neon-logo.svg" alt="Neon logo" width="180"></a></p>
+
+Supported by the [Neon Open Source Program](https://neon.com).
+
 Beeblio is a full-stack AI research workspace. It collaborates with you and works directly in your folders & documents. The Next.js interface and Eve agent run locally on your computer, and each project points to an existing folder.
 
 This is intended for a single trusted user on one computer.
@@ -38,6 +42,12 @@ pnpm dev
 Open [http://127.0.0.1:3000](http://127.0.0.1:3000). The root URL redirects to `/workspace`. `pnpm dev` creates `.beeblio/` if needed, applies SQLite migrations, and starts both the Next.js UI and the Eve agent. They listen on `127.0.0.1:3000` and `127.0.0.1:2000` respectively.
 
 Choose **Link Project Folder** to select a folder. You can also paste its absolute path. Beeblio stores the resolved path in SQLite and works with the files in place. On linking, it adds any missing canonical files & folders: `1-References/`, `2-Data/`, `3-Analysis/`, and `4-Reports/` folders, plus `1-References/references.bib` and `3-Analysis/literature-matrix.matrix`. Existing files are preserved. Agent file tools display the folder as `/workspace`; agent shell commands run on your computer with that folder as the working directory. `$BEEBLIO_PROJECT_DIR` contains its absolute path.
+
+### PostgreSQL-backed cloud deployment
+
+For deployments of Beeblio's separate PostgreSQL-backed cloud service, we recommend [Neon](https://neon.com) as a managed PostgreSQL option. Create a Neon project and provide its PostgreSQL connection string through `DATABASE_URL` in the cloud service's deployment environment. The cloud service uses a Drizzle-managed PostgreSQL schema and requires a database connection; Neon can replace the PostgreSQL container used by a self-hosted deployment.
+
+This repository is the local OSS edition. Its setup above uses embedded SQLite and does not connect to `DATABASE_URL` or require Neon. The PostgreSQL-backed cloud service is a separate codebase, so the instructions in this repository do not deploy that service.
 
 ## Desktop app
 
