@@ -1,7 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
 import type { EveMessage, EveMessagePart } from "eve/react";
 import { Cpu, PenLine, ScrollText } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 
 import {
@@ -10,6 +10,7 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { filterRetriedMessages } from "./agent-message-visibility";
 import {
   AgentMessage,
   type AgentInputResponse,
@@ -29,7 +30,11 @@ export function AgentMessageList({
   reasoningVerbosity,
   sendScrollSignal,
   onInputResponses,
+  errorMessage,
+  onRetry,
+  retriedMessageIds,
 }: {
+  readonly retriedMessageIds?: ReadonlySet<string>;
   readonly messages: readonly EveMessage[];
   readonly status: "ready" | "resuming" | "submitted" | "streaming" | "error";
   readonly lastEvent?: MessageStreamEvent;
@@ -45,9 +50,17 @@ export function AgentMessageList({
   readonly onInputResponses: (
     inputResponses: readonly AgentInputResponse[],
   ) => void | Promise<void>;
+  readonly errorMessage?: string;
+  readonly onRetry?: () => void;
 }) {
   const isBusy = status === "submitted" || status === "streaming";
-  const lastUserMessageIndex = messages.findLastIndex(
+
+  const displayMessages = useMemo(
+    () => filterRetriedMessages(messages, retriedMessageIds),
+    [messages, retriedMessageIds],
+  );
+
+  const lastUserDisplayIndex = displayMessages.findLastIndex(
     (message) => message.role === "user" && message.metadata?.optimistic !== true,
   );
   // A part can only still be receiving events while its message belongs to
@@ -59,11 +72,11 @@ export function AgentMessageList({
   const liveAssistantMessageIds = new Set<string>();
   if (isBusy) {
     for (
-      let index = lastUserMessageIndex + 1;
-      index < messages.length;
+      let index = lastUserDisplayIndex + 1;
+      index < displayMessages.length;
       index += 1
     ) {
-      const message = messages[index];
+      const message = displayMessages[index];
       if (
         message.role === "assistant" &&
         message.metadata?.status === "streaming"
@@ -72,15 +85,15 @@ export function AgentMessageList({
       }
     }
   }
-  const hasVisibleAgentResponse = messages
-    .slice(lastUserMessageIndex + 1)
+  const hasVisibleAgentResponse = displayMessages
+    .slice(lastUserDisplayIndex + 1)
     .some(
       (message) =>
         message.role === "assistant" &&
         message.parts.some(isVisibleAgentResponsePart),
     );
-  const hasLiveToolActivity = messages
-    .slice(lastUserMessageIndex + 1)
+  const hasLiveToolActivity = displayMessages
+    .slice(lastUserDisplayIndex + 1)
     .some(
       (message) =>
         message.role === "assistant" &&
@@ -93,8 +106,11 @@ export function AgentMessageList({
     (!hasVisibleAgentResponse ||
       isWaitingForNextAgentActivity(lastEvent) ||
       textStreamStalled);
-  const visibleMessages = messages.filter((message) =>
+  const visibleMessages = displayMessages.filter((message) =>
     message.parts.some(isVisibleAgentResponsePart),
+  );
+  const lastUserVisibleIndex = visibleMessages.findLastIndex(
+    (message) => message.role === "user",
   );
   const turnDurations = new Map<string, number>();
   const turnStarts = new Map<string, number>();
@@ -119,21 +135,26 @@ export function AgentMessageList({
       <ConversationContent className="w-full gap-6 px-4 py-6 sm:px-5">
         {/* A streaming turn starts with a step-start-only shell. Filtering it
             avoids a zero-height message claiming a gap in the conversation. */}
-        {visibleMessages.map((message, index) => (
-          <AgentMessage
-            canRespond={!isBusy}
-            isLive={liveAssistantMessageIds.has(message.id)}
-            isStreaming={
-              status === "streaming" && index === visibleMessages.length - 1
-            }
-            key={message.id}
-            message={message}
-            turnDuration={message.metadata?.turnId ? turnDurations.get(message.metadata.turnId) : undefined}
-            toolCallVerbosity={toolCallVerbosity}
-            reasoningVerbosity={reasoningVerbosity}
-            onInputResponses={onInputResponses}
-          />
-        ))}
+        {visibleMessages.map((message, index) => {
+          const isFailedUserMessage = Boolean(errorMessage) && index === lastUserVisibleIndex;
+          return (
+            <AgentMessage
+              canRespond={!isBusy}
+              isLive={liveAssistantMessageIds.has(message.id)}
+              isStreaming={
+                status === "streaming" && index === visibleMessages.length - 1
+              }
+              key={message.id}
+              message={message}
+              turnDuration={message.metadata?.turnId ? turnDurations.get(message.metadata.turnId) : undefined}
+              toolCallVerbosity={toolCallVerbosity}
+              reasoningVerbosity={reasoningVerbosity}
+              onInputResponses={onInputResponses}
+              isFailed={isFailedUserMessage}
+              onRetry={isFailedUserMessage ? onRetry : undefined}
+            />
+          );
+        })}
         {isBusy && isCompacting ? (
           <AgentCompactionIndicator />
         ) : isWaitingForAgent ? (
