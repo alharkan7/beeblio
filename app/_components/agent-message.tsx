@@ -16,6 +16,7 @@ import {
   ImageIcon,
   KeyRoundIcon,
   LoaderCircleIcon,
+  RotateCcw,
   ScrollText,
   Wrench,
   XCircleIcon,
@@ -24,7 +25,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ComponentProps, type ReactNode, useState } from "react";
-import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { Message, MessageContent, MessageResponse, MessageActions } from "@/components/ai-elements/message";
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import {
   Tool,
@@ -76,6 +77,8 @@ export function AgentMessage({
   onInputResponses,
   reasoningVerbosity,
   toolCallVerbosity,
+  isFailed,
+  onRetry,
 }: {
   readonly canRespond: boolean;
   /** False once the turn that owns this message can no longer deliver events
@@ -88,6 +91,8 @@ export function AgentMessage({
   readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
   readonly reasoningVerbosity: ReasoningVerbosity;
   readonly toolCallVerbosity: ToolCallVerbosity;
+  readonly isFailed?: boolean;
+  readonly onRetry?: () => void;
 }) {
   const activeTextIndex = message.parts.at(-1)?.type === "text"
     ? message.parts.length - 1
@@ -157,7 +162,7 @@ export function AgentMessage({
 
   return (
     <Message
-      data-message-failed={message.metadata?.status === "failed" ? "true" : undefined}
+      data-message-failed={message.metadata?.status === "failed" || isFailed ? "true" : undefined}
       from={message.role}
     >
       <MessageContent>
@@ -166,6 +171,21 @@ export function AgentMessage({
           <KnowledgeCitations citations={knowledgeCitations} />
         ) : null}
       </MessageContent>
+      {message.role === "user" && isFailed && onRetry ? (
+        <MessageActions className="justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={onRetry}
+            disabled={!canRespond}
+          >
+            <RotateCcw className="size-3" />
+            Retry
+          </Button>
+        </MessageActions>
+      ) : null}
     </Message>
   );
 }

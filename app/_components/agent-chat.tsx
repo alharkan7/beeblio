@@ -8,6 +8,8 @@ import { useEveAgent } from "eve/react";
 import {
   AlertCircleIcon,
   Pencil,
+  RotateCcw,
+  X,
 } from "lucide-react";
 import {
   useCallback,
@@ -29,6 +31,8 @@ import {
   SKILLS_CHANGED_EVENT,
   openWorkspaceEntry,
   serializeChatMessage,
+  parseChatMessage,
+  getChatSelections,
   type AskAgentDetail,
   type ChatFileContext,
   type ChatInteractionContext,
@@ -218,6 +222,13 @@ function AgentChatInner({
   // touching the server-side session. Used to unwedge the UI when a
   // cancelled turn's terminal events never arrive.
   const turnAbortRef = useRef<AbortController | undefined>(undefined);
+  const lastDispatchedMessageRef = useRef<{
+    serialized: string;
+    inlineSnapshot: HeldChatMessage["inlineSnapshot"];
+    restore: Omit<HeldChatMessage, "serialized" | "inlineSnapshot">;
+  } | null>(null);
+  const [isErrorDismissed, setIsErrorDismissed] = useState(false);
+  const [retriedMessageIds, setRetriedMessageIds] = useState<Set<string>>(() => new Set());
   const [cancellationError, setCancellationError] = useState<string>();
   const [streamError, setStreamError] = useState<string | undefined>(() =>
     latestStreamError(historyEvents),
@@ -387,6 +398,7 @@ function AgentChatInner({
       }
       if (event.type === "turn.failed" || event.type === "session.failed") {
         setStreamError(event.data.message || "The agent could not complete this request.");
+        setIsErrorDismissed(false);
       }
       if (event.type === "turn.completed" || event.type === "turn.failed" || event.type === "turn.cancelled" || event.type === "session.failed") {
         if (event.type === "session.failed") {
@@ -406,6 +418,7 @@ function AgentChatInner({
       }
       if (event.type === "turn.started") {
         setStreamError(undefined);
+        setIsErrorDismissed(false);
       }
     },
     [projectId, sessionId],
@@ -512,7 +525,8 @@ function AgentChatInner({
   const isBusy = agent.status === "submitted" || agent.status === "streaming";
   const isResuming = agent.status === "resuming";
   const isEmpty = agent.data.messages.length === 0;
-  const errorMessage = cancellationError ?? streamError ?? agent.error?.message;
+  const rawErrorMessage = cancellationError ?? streamError ?? agent.error?.message;
+  const errorMessage = isErrorDismissed ? undefined : rawErrorMessage;
   // The storage turn gate also answers 402; distinguish it from credit shortage.
   // The composer's status prop speaks the AI SDK ChatStatus vocabulary, which
   // has no "resuming"; show the spinner for it and rely on submitDisabled.
@@ -534,6 +548,7 @@ function AgentChatInner({
     setCancellationError(undefined);
     setStreamError(undefined);
     setCancellationState("idle");
+    setIsErrorDismissed(false);
     turnAbortRef.current = new AbortController();
   };
 
@@ -990,11 +1005,19 @@ function AgentChatInner({
     inlineSnapshot: HeldChatMessage["inlineSnapshot"];
     restore: Omit<HeldChatMessage, "serialized" | "inlineSnapshot">;
     restageOnFailure: boolean;
+    clearComposer?: boolean;
   }) => {
+    lastDispatchedMessageRef.current = {
+      serialized: input.serialized,
+      inlineSnapshot: input.inlineSnapshot,
+      restore: input.restore,
+    };
     const appSessionId = prepareConversation();
     prepareTurn();
     setSendScrollSignal((signal) => signal + 1);
-    clearComposerState();
+    if (input.clearComposer !== false) {
+      clearComposerState();
+    }
     pendingInlineSnapshotRef.current = input.inlineSnapshot;
     const steerNow = input.steer && (agent.status === "submitted" || agent.status === "streaming");
     try {
@@ -1010,7 +1033,7 @@ function AgentChatInner({
       pendingInlineSnapshotRef.current = null;
       if (input.restageOnFailure) {
         setHeldMessage({ serialized: input.serialized, ...input.restore, inlineSnapshot: input.inlineSnapshot });
-      } else {
+      } else if (input.clearComposer !== false) {
         setDraft(input.restore.preview);
         setMentionedFiles(input.restore.mentions);
         setMentionedSkills(input.restore.skills);
@@ -1019,6 +1042,65 @@ function AgentChatInner({
       throw error;
     }
   };
+
+  const getLastUserMessagePayload = useCallback((): {
+    serialized: string;
+    inlineSnapshot: HeldChatMessage["inlineSnapshot"];
+    restore: Omit<HeldChatMessage, "serialized" | "inlineSnapshot">;
+  } | null => {
+    if (lastDispatchedMessageRef.current) {
+      return lastDispatchedMessageRef.current;
+    }
+    const lastUserMessage = agent.data.messages.findLast((msg) => msg.role === "user");
+    if (!lastUserMessage) return null;
+    const textPart = lastUserMessage.parts.find((p) => p.type === "text");
+    if (!textPart || textPart.type !== "text") return null;
+
+    const rawText = textPart.text;
+    const parsed = parseChatMessage(rawText);
+    const context = parsed.context;
+    return {
+      serialized: rawText,
+      inlineSnapshot: null,
+      restore: {
+        preview: parsed.text,
+        mentions: context?.files ?? [],
+        skills: context?.skills ?? [],
+        selections: getChatSelections(context ?? { files: [] }),
+      },
+    };
+  }, [agent.data.messages]);
+
+  const handleRetry = useCallback(async () => {
+    if (isBusy || isResuming || isUploading || cancellationState !== "idle") return;
+    const payload = getLastUserMessagePayload();
+    if (!payload) return;
+
+    const lastUserMsg = agent.data.messages.findLast((msg) => msg.role === "user");
+    if (lastUserMsg) {
+      setRetriedMessageIds((prev) => new Set(prev).add(lastUserMsg.id));
+    }
+
+    try {
+      await dispatchRef.current({
+        serialized: payload.serialized,
+        steer: false,
+        inlineSnapshot: payload.inlineSnapshot,
+        restore: payload.restore,
+        restageOnFailure: false,
+        clearComposer: false,
+      });
+    } catch (err) {
+      console.error("Retry failed:", err);
+    }
+  }, [
+    isBusy,
+    isResuming,
+    isUploading,
+    cancellationState,
+    getLastUserMessagePayload,
+    agent.data.messages,
+  ]);
 
   const dispatchRef = useRef(dispatchSerializedMessage);
   dispatchRef.current = dispatchSerializedMessage;
@@ -1129,11 +1211,37 @@ function AgentChatInner({
     <main className="flex h-full flex-col overflow-hidden bg-background text-foreground">
       {errorMessage ? (
         <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pt-2 sm:px-6">
-          <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm">
-            <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
-            <div>
-              <p className="font-medium">Request failed</p>
-              <p className="mt-0.5 text-muted-foreground">{errorMessage}</p>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm">
+            <div className="flex items-start gap-3 min-w-0">
+              <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
+              <div className="min-w-0">
+                <p className="font-medium text-destructive">Request failed</p>
+                <p className="mt-0.5 text-muted-foreground break-words">{errorMessage}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              {getLastUserMessagePayload() ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 border-destructive/30 text-foreground hover:bg-destructive/10"
+                  disabled={isBusy || isResuming || isUploading}
+                  onClick={() => void handleRetry()}
+                >
+                  <RotateCcw className="size-3.5" />
+                  Retry
+                </Button>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setIsErrorDismissed(true)}
+                title="Dismiss error"
+              >
+                <X className="size-3.5" />
+                <span className="sr-only">Dismiss</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -1186,6 +1294,9 @@ function AgentChatInner({
           toolCallVerbosity={toolCallVerbosity}
           reasoningVerbosity={reasoningVerbosity}
           sendScrollSignal={sendScrollSignal}
+          errorMessage={errorMessage}
+          onRetry={handleRetry}
+          retriedMessageIds={retriedMessageIds}
           onInputResponses={(inputResponses) => {
             prepareTurn();
             return agent.respond(inputResponses, {
