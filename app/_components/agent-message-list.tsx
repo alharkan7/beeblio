@@ -10,6 +10,7 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { filterRetriedMessages } from "./agent-message-visibility";
 import {
   AgentMessage,
   type AgentInputResponse,
@@ -54,28 +55,10 @@ export function AgentMessageList({
 }) {
   const isBusy = status === "submitted" || status === "streaming";
 
-  // Filter out any user message that was retried or superseded so duplicate bubbles are not displayed
-  const displayMessages = useMemo(() => {
-    const result: EveMessage[] = [];
-    for (let i = 0; i < messages.length; i++) {
-      const msg = messages[i];
-      if (retriedMessageIds?.has(msg.id)) {
-        continue;
-      }
-      if (msg.role === "user") {
-        const nextMsg = messages[i + 1];
-        if (nextMsg && nextMsg.role === "user") {
-          const currentText = msg.parts.find((p) => p.type === "text")?.text;
-          const nextText = nextMsg.parts.find((p) => p.type === "text")?.text;
-          if (currentText && nextText && currentText === nextText) {
-            continue;
-          }
-        }
-      }
-      result.push(msg);
-    }
-    return result;
-  }, [messages, retriedMessageIds]);
+  const displayMessages = useMemo(
+    () => filterRetriedMessages(messages, retriedMessageIds),
+    [messages, retriedMessageIds],
+  );
 
   const lastUserDisplayIndex = displayMessages.findLastIndex(
     (message) => message.role === "user" && message.metadata?.optimistic !== true,

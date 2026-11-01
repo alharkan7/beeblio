@@ -1091,6 +1091,13 @@ function AgentChatInner({
         clearComposer: false,
       });
     } catch (err) {
+      if (lastUserMsg) {
+        setRetriedMessageIds((prev) => {
+          const next = new Set(prev);
+          next.delete(lastUserMsg.id);
+          return next;
+        });
+      }
       console.error("Retry failed:", err);
     }
   }, [
