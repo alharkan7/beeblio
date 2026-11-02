@@ -45,6 +45,7 @@ import {
   parseChatMessage,
   type ChatContext,
 } from "@/lib/chat-context";
+import { ChatCitation, CHAT_CITATION_TITLE, remarkChatCitations } from "./chat-citations";
 import { describeToolCall } from "@/lib/tool-labels";
 import { rewriteWorkspaceSchemeLinks } from "@/lib/markdown-workspace-links";
 import { workspaceFilePath, blockedUrlWorkspacePath } from "@/lib/workspace-file-path";
@@ -131,7 +132,7 @@ export function AgentMessage({
         </CollapsibleContent>
       </Collapsible>
     ) : (
-      <div key={`activity:${parts[0].index}`}>{content}</div>
+      <div className="flex flex-col gap-2" key={`activity:${parts[0].index}`}>{content}</div>
     ));
   };
   message.parts.forEach((part, index) => {
@@ -410,7 +411,7 @@ function DynamicToolPart({
 
   if (toolCallVerbosity === "compact" && inputRequest && part.toolName === "ask_question") {
     return (
-      <div className="mb-2 space-y-2">
+      <div className="space-y-2">
         <ToolActivity
           detail={detail}
           icon={icon}
@@ -441,7 +442,7 @@ function DynamicToolPart({
   }
   if (toolCallVerbosity === "compact" && !inputRequest) {
     return (
-      <div className="mb-2">
+      <div>
         <ToolActivity
           detail={writingDetail}
           icon={icon}
@@ -796,6 +797,7 @@ function AgentMessageResponse(props: ComponentProps<typeof MessageResponse>) {
       {...rest}
       className={cn("agent-chat-markdown", props.className)}
       components={agentMessageComponents}
+      remarkPlugins={[remarkChatCitations]}
     >
       {typeof children === "string" ? rewriteWorkspaceSchemeLinks(children) : children}
     </MessageResponse>
@@ -916,6 +918,7 @@ function BlockedWorkspaceLink({
   title,
   ...props
 }: ComponentProps<"span"> & { node?: unknown }) {
+  if (typeof title === "string" && title.startsWith(CHAT_CITATION_TITLE)) return <ChatCitation token={title.slice(CHAT_CITATION_TITLE.length)} />;
   const url = typeof title === "string" && title.startsWith(BLOCKED_URL_TITLE_PREFIX)
     ? title.slice(BLOCKED_URL_TITLE_PREFIX.length)
     : null;

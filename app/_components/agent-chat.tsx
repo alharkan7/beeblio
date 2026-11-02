@@ -1287,6 +1287,7 @@ function AgentChatInner({
         )
       ) : (
         <AgentMessageList
+          projectId={projectId}
           messages={agent.data.messages}
           status={agent.status}
           lastEvent={lastStreamEvent}

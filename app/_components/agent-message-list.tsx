@@ -9,6 +9,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { ChatCitationProvider } from "./chat-citations";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { filterRetriedMessages } from "./agent-message-visibility";
 import {
@@ -19,6 +20,7 @@ import {
 } from "./agent-message";
 
 export function AgentMessageList({
+  projectId,
   messages,
   status,
   lastEvent,
@@ -34,6 +36,7 @@ export function AgentMessageList({
   onRetry,
   retriedMessageIds,
 }: {
+  readonly projectId?: string;
   readonly retriedMessageIds?: ReadonlySet<string>;
   readonly messages: readonly EveMessage[];
   readonly status: "ready" | "resuming" | "submitted" | "streaming" | "error";
@@ -131,6 +134,7 @@ export function AgentMessageList({
   }
 
   return (
+    <ChatCitationProvider projectId={projectId}>
     <Conversation className="min-h-0 flex-1">
       <ConversationContent className="w-full gap-6 px-4 py-6 sm:px-5">
         {/* A streaming turn starts with a step-start-only shell. Filtering it
@@ -159,6 +163,7 @@ export function AgentMessageList({
           <AgentCompactionIndicator />
         ) : isWaitingForAgent ? (
           <AgentWorkingIndicator
+            followsAssistantActivity={visibleMessages.at(-1)?.role === "assistant"}
             isInitialTurn={isInitialTurn}
             lastEvent={lastEvent}
           />
@@ -167,6 +172,7 @@ export function AgentMessageList({
       <ScrollOnSend signal={sendScrollSignal} />
       <ConversationScrollButton />
     </Conversation>
+    </ChatCitationProvider>
   );
 }
 
@@ -190,9 +196,11 @@ function ScrollOnSend({ signal }: { readonly signal: number }) {
 }
 
 function AgentWorkingIndicator({
+  followsAssistantActivity,
   isInitialTurn,
   lastEvent,
 }: {
+  readonly followsAssistantActivity: boolean;
   readonly isInitialTurn: boolean;
   readonly lastEvent?: MessageStreamEvent;
 }) {
@@ -211,7 +219,7 @@ function AgentWorkingIndicator({
   return (
     <div
       aria-label={cue.ariaLabel}
-      className="flex min-h-7 items-center gap-2 py-0.5 text-xs text-muted-foreground"
+      className={`flex min-h-7 items-center gap-2 py-0.5 text-xs text-muted-foreground${followsAssistantActivity ? " -mt-4" : ""}`}
       role="status"
     >
       <Icon aria-hidden="true" className="size-3.5 shrink-0" />

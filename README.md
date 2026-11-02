@@ -27,7 +27,7 @@ The project [session page](./app/%5BprojectId%5D/%5B%5B...sessionId%5D%5D/page.t
 - Node.js 24 and pnpm 11
 - An OpenRouter API key and model ID for the agent
 - Bash and Python 3 for local agent commands and analysis
-- Optional: LibreOffice (`soffice`) for agent-assisted Office-to-PDF conversion; other command-line tools and Python packages for the workflows you want to run
+- Optional: a local TeX distribution with `latexmk` (preferred) or `pdflatex` to compile `.tex` files to PDF; LibreOffice (`soffice`) for agent-assisted Office-to-PDF conversion; other command-line tools and Python packages for the workflows you want to run
 
 In the browser, the folder picker supports native folder selection on macOS, Windows, and Linux (with zenity or kdialog); on any system, you can also paste an existing absolute folder path in the project form. The [desktop app](#desktop-app) has a native folder picker on every platform.
 
@@ -39,7 +39,7 @@ pnpm dev
 # Open http://127.0.0.1:3000 and add your OpenRouter key and model in Settings
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000). The root URL redirects to `/workspace`. `pnpm dev` creates `.beeblio/` if needed, applies SQLite migrations, and starts both the Next.js UI and the Eve agent. They listen on `127.0.0.1:3000` and `127.0.0.1:2000` respectively.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000). The root URL redirects to `/workspace`. `pnpm dev` creates `.beeblio/` if needed, applies SQLite migrations, and starts both the Next.js UI and the Eve agent. They listen on `127.0.0.1:3000` and `127.0.0.1:2000` respectively. `pnpm install` installs Beeblio’s JavaScript dependencies; it does not install a TeX distribution. See [LaTeX compilation](#latex-compilation) if you want to compile `.tex` files.
 
 Choose **Link Project Folder** to select a folder. You can also paste its absolute path. Beeblio stores the resolved path in SQLite and works with the files in place. On linking, it adds any missing canonical files & folders: `1-References/`, `2-Data/`, `3-Analysis/`, and `4-Reports/` folders, plus `1-References/references.bib` and `3-Analysis/literature-matrix.matrix`. Existing files are preserved. Agent file tools display the folder as `/workspace`; agent shell commands run on your computer with that folder as the working directory. `$BEEBLIO_PROJECT_DIR` contains its absolute path.
 
@@ -51,7 +51,7 @@ This repository is the local OSS edition. Its setup above uses embedded SQLite a
 
 ## Desktop app
 
-Beeblio also runs as a desktop app for Apple Silicon Macs (macOS 12 or later) and Windows, in its own window. It includes everything it needs to run, so you don't need Node.js or a checkout.
+Beeblio also runs as a desktop app for Apple Silicon Macs (macOS 12 or later) and Windows, in its own window. It includes everything it needs to run, so you don't need Node.js or a checkout. Compiling `.tex` files to PDF requires a separate TeX installation on your computer.
 
 ### Install
 
@@ -66,7 +66,7 @@ The installers are not signed with a developer certificate yet, so your system w
 
 The agent runs commands with programs on your computer. **Settings → System Tools** checks which ones are installed and how to install the rest:
 - Python 3 with pandas and python-docx, for analysis and Word files.
-- [Pandoc](https://pandoc.org), for LaTeX and Word export.
+- [Pandoc](https://pandoc.org), for LaTeX and Word export. A TeX distribution is a separate optional tool for compiling `.tex` files to PDF.
 - [LibreOffice](https://www.libreoffice.org), for Office files.
 - FFmpeg, Poppler and Tesseract, for media, PDFs and OCR.
 
@@ -148,9 +148,19 @@ Beeblio still calls external model and research APIs when those features are use
 
 ## Documents
 
+### LaTeX compilation
+
+The LaTeX editor's live reading preview works without TeX. To use **Compile** or the agent's `compile_latex` tool to produce a PDF, install a TeX distribution separately from `pnpm install`:
+
+- **macOS:** Install [MacTeX](https://www.tug.org/mactex/mactex-download.html), or [BasicTeX](https://www.tug.org/mactex/morepackages.html) plus `latexmk` and any packages your documents use.
+- **Windows:** Install [MiKTeX](https://miktex.org/download) or [TeX Live](https://www.tug.org/texlive/).
+- **Linux:** Install [TeX Live](https://www.tug.org/texlive/quickinstall.html) or your distribution's TeX Live packages, including `latexmk` if available.
+
+Check that `latexmk -v` or `pdflatex --version` works in a terminal, then restart Beeblio so it picks up the updated `PATH`. Beeblio prefers `latexmk`; it falls back to `pdflatex` and runs `bibtex` and `makeglossaries` when available. A minimal distribution may need additional packages for a particular document. Compilation runs on your computer and writes the PDF to `4-Reports/Compiled/` in the linked project folder. The source ZIP and `.tex` downloads do not require TeX.
+
 The Markdown editor can export DOCX, DOCX with Mendeley or Zotero citations, LaTeX, and portable Markdown. Office files in the workspace open in Microsoft's read-only Office Online viewer. Because Microsoft fetches the file itself, local previews require a public HTTPS tunnel to `127.0.0.1:3000` and its base URL in `PUBLIC_TUNNEL_ORIGIN`; restart `pnpm dev` after changing it. The Share button also uses this origin for links that others can open. Keep the tunnel running while using either feature. The tunnel exposes the app, and Office previews send the viewed file to Microsoft's service.
 
-To make a PDF, export DOCX and convert it with your local document software or ask the agent to do it. LibreOffice is optional for that local conversion; it is not used by the current Office file viewer.
+To make a PDF from a Markdown document, export DOCX and convert it with your local document software or ask the agent to do it. LibreOffice is optional for that local conversion; it is not used by the current Office file viewer.
 
 The Share button creates a public link for a file. When `PUBLIC_TUNNEL_ORIGIN` is set, the link uses that tunnel even if you opened Beeblio through localhost. Keep the app and tunnel running for others to view shared files or submit shared forms; form responses are saved in the project folder.
 
