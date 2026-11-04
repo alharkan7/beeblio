@@ -39,6 +39,7 @@ export const SETTINGS = [
   { name: "GOOGLE_API_KEY", label: "Google Gemini", group: "keys", kind: "secret", help: "Transcription and Knowledge search." },
   { name: "BRAVE_SEARCH_API_KEY", label: "Brave Search", group: "keys", kind: "secret", help: "The agent's Brave web search tool." },
   { name: "MONID_API_KEY", label: "Monid", group: "keys", kind: "secret", help: "Monid-backed research tools." },
+  { name: "KEENABLE_API_KEY", label: "Keenable", group: "keys", kind: "secret", help: "The agent's Keenable web search tool. It works without a key; a key raises its rate limit." },
   { name: "OPENALEX_API_KEY", label: "OpenAlex", group: "keys", kind: "secret", help: "Literature search." },
   { name: "NCBI_API_KEY", label: "NCBI (PubMed)", group: "keys", kind: "secret", help: "PubMed literature search." },
   { name: "GOOGLE_TRANSCRIPTION_MODEL_ID", label: "Transcription Model", group: "google", kind: "model", placeholder: "gemini-3.5-transcribe", help: "Gemini model for transcribing audio and video." },
