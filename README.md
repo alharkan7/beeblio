@@ -174,3 +174,7 @@ pnpm build:eve
 pnpm db:migrate
 pnpm --dir desktop typecheck
 ```
+
+## License
+
+The source code is licensed under the [Apache License 2.0](LICENSE.md). The license does not grant permission to use the Beeblio name or logos as branding for another product. Third-party names and logos remain the property of their respective owners.

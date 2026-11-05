@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Desktop app for the local Beeblio workspace",
   "private": true,
-  "license": "SEE LICENSE IN ../LICENSE.md",
+  "license": "Apache-2.0",
   "packageManager": "pnpm@11.17.0",
   "type": "module",
   "main": "dist/main.js",

@@ -20,7 +20,7 @@ Do not commit `.env.local`, `.beeblio/`, linked project files, generated builds,
 
 ## Contribution terms
 
-Beeblio is source available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md), and when you submit a pull request, your contribution is licensed under the same terms as the rest of the project. Beeblio also exists as a hosted service, which runs under a separate commercial license. Before we include a community contribution in the hosted service, we will ask for your OK on the pull request — a short reply confirming it is enough.
+Beeblio is open source under the [Apache License 2.0](LICENSE.md). By submitting a pull request, you agree to license your contribution under Apache License 2.0, unless you explicitly state otherwise. You retain copyright in your contribution.
 
 ## Reporting problems
 
