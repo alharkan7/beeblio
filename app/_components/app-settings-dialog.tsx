@@ -33,6 +33,7 @@ const HELP_LINKS: Partial<Record<SettingName, { href: string; label: string }>> 
   GOOGLE_API_KEY: { href: "https://aistudio.google.com/apikey", label: "Get a Key" },
   BRAVE_SEARCH_API_KEY: { href: "https://brave.com/search/api/", label: "Get a Key" },
   MONID_API_KEY: { href: "https://app.monid.ai/access/api-keys", label: "Get a Key" },
+  KEENABLE_API_KEY: { href: "https://keenable.ai/console", label: "Get a Key" },
   OPENALEX_API_KEY: { href: "https://help.openalex.org/api/", label: "Get a Key" },
   NCBI_API_KEY: { href: "https://www.ncbi.nlm.nih.gov/account/settings/", label: "Get a Key" },
 };

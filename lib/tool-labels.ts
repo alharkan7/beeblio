@@ -59,6 +59,7 @@ const TOOL_LABELS: Record<string, string> = {
   // beeblio tools
   analyze_image: "Analyze Image",
   brave_search: "Search Web",
+  keenable_search: "Search Web",
   copy_path: "Copy",
   create_directory: "New Folder",
   create_form: "Build Form",
@@ -100,6 +101,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   // beeblio tools
   analyze_image: ImageIcon,
   brave_search: SearchIcon,
+  keenable_search: SearchIcon,
   copy_path: CopyIcon,
   create_directory: FolderPlusIcon,
   create_form: ClipboardListIcon,
@@ -174,6 +176,7 @@ function detailFor(part: EveDynamicToolPart): string | undefined {
       return quoted(stringField(input, "pattern"));
     case "web_search":
     case "brave_search":
+    case "keenable_search":
     case "search_literature":
     case "fetch_openalex_works":
     case "search_knowledge":
