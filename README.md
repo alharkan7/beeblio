@@ -130,7 +130,7 @@ In a checkout you can also set any of these as environment variables in `.env.lo
 | `OPENROUTER_VISION_MODEL_ID` | Image analysis; falls back to the main model if it supports vision |
 | `GOOGLE_API_KEY`, `GOOGLE_TRANSCRIPTION_MODEL_ID` | Google key and selected transcription model for audio transcription |
 | `GOOGLE_KNOWLEDGE_EMBEDDING_MODEL_ID`, `GOOGLE_KNOWLEDGE_QUERY_MODEL_ID` | Selected Google models for creating and querying Knowledge stores |
-| `MONID_API_KEY`, `BRAVE_SEARCH_API_KEY` | Optional research and web tools |
+| `MONID_API_KEY`, `BRAVE_SEARCH_API_KEY`, `KEENABLE_API_KEY` | Optional research and web tools |
 | `CROSSREF_MAILTO` | Contact address for scholarly metadata requests |
 | `PUBLIC_TUNNEL_ORIGIN` | Public HTTPS origin of a tunnel to the local UI, used for Office Online previews and share links |
 
