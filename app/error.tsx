@@ -28,10 +28,10 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
       }
     >
       <Button type="button" onClick={reset} autoFocus>
-        <RotateCcw />Try again
+        <RotateCcw />Try Again
       </Button>
       <Button variant="outline" asChild>
-        <Link href="/workspace">Back to projects</Link>
+        <Link href="/workspace">Back to Projects</Link>
       </Button>
     </RouteFallback>
   );

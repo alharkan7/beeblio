@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <RouteFallback title="Page not found" description="This link does not lead anywhere in Beeblio. It may be out of date.">
       <Button asChild>
-        <Link href="/workspace">Back to projects</Link>
+        <Link href="/workspace">Back to Projects</Link>
       </Button>
     </RouteFallback>
   );

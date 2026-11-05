@@ -71,10 +71,15 @@ export default async function ProjectLayout({
 }) {
   const { projectId } = await params;
   const user = await requireUser();
-  const [workspaceListing, project, initialSkills, initialKnowledgeDocuments, switcherProjects] =
+  const project = await getOwnedProject(user, projectId);
+  if (!project) redirect("/workspace");
+  if (project.folderPath && !(await isFolder(project.folderPath))) {
+    return <MissingProjectFolder projectId={projectId} projectName={project.name} folderPath={project.folderPath} />;
+  }
+
+  const [workspaceListing, initialSkills, initialKnowledgeDocuments, switcherProjects] =
     await Promise.all([
       getInitialWorkspaceListing(projectId),
-      getOwnedProject(user, projectId),
       // Skills seed for the Skills panel; on failure it falls back to the
       // panel's own fetch instead of failing the whole layout.
       listAgentSkills(user.id).catch(() => undefined),
@@ -82,12 +87,6 @@ export default async function ProjectLayout({
       getProjects().catch(() => undefined),
     ]);
   const initialRootTree = workspaceListing.rootTree;
-  if (!project) {
-    redirect("/workspace");
-  }
-  if (project.folderPath && !(await isFolder(project.folderPath))) {
-    return <MissingProjectFolder projectName={project.name} folderPath={project.folderPath} />;
-  }
   
   const initialActivity = rememberedRailActivity(
     (await cookies()).get(`beeblio:${projectId}:rail-activity`)?.value,
