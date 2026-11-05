@@ -1,4 +1,4 @@
-# Beeblio
+# Beeblio - The Agentic Research Workspace
 
 <p align="center"><a href="https://neon.com"><img src="./public/neon-logo.svg" alt="Neon logo" width="180"></a></p>
 
