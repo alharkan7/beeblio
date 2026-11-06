@@ -59,6 +59,9 @@ export const agentSessions = sqliteTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     title: text("title"),
     status: text("status").notNull().default("active"),
+    runStatus: text("run_status").notNull().default("idle"),
+    runStatusAt: integer("run_status_at", { mode: "timestamp_ms" }),
+    lastViewedAt: integer("last_viewed_at", { mode: "timestamp_ms" }),
     deletedAt: integer("deleted_at", { mode: "timestamp" }),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
@@ -75,6 +78,7 @@ export const agentSessions = sqliteTable(
       "agent_sessions_status_check",
       sql`${t.status} in ('active', 'archived', 'deleted')`,
     ),
+    check("agent_sessions_run_status_check", sql`${t.runStatus} in ('idle', 'running', 'needs_input', 'finished', 'failed')`),
     index("idx_agent_sessions_project_id").on(t.projectId),
   ],
 );

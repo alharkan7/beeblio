@@ -1,5 +1,5 @@
 import { after, NextRequest } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { agentSessions, projects } from "@/db/schema";
 import { getUser } from "@/lib/auth/session";
@@ -33,6 +33,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
     headers.set("x-model-context-window-tokens", String(chatModel.contextLength));
   }
 
+  let newConversationAppSessionId: string | undefined;
   if (targetPath === "v1/session" && req.method === "POST") {
     const appSessionId = req.headers.get("x-beeblio-app-session-id")?.trim();
     if (appSessionId) {
@@ -42,7 +43,14 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
       const body = parseJsonObject(requestBody);
       const firstMessage = messageText(body?.message);
       const initialTitle = "New Conversation";
-      await db.insert(agentSessions).values({ id: appSessionId, projectId: project.id, title: initialTitle }).onConflictDoNothing({ target: agentSessions.id });
+      try {
+        const inserted = await db.insert(agentSessions).values({ id: appSessionId, projectId: project.id, title: initialTitle, runStatus: "running", runStatusAt: new Date() }).onConflictDoNothing({ target: agentSessions.id }).returning({ id: agentSessions.id });
+        if (!inserted.length) return Response.json({ error: "Conversation already exists" }, { status: 409 });
+      } catch (error) {
+        console.error("Conversation registration failed:", error);
+        return Response.json({ error: "Unable to create conversation" }, { status: 503 });
+      }
+      newConversationAppSessionId = appSessionId;
       after(async () => {
         try {
           const title = await generateConversationTitle(firstMessage);
@@ -54,12 +62,27 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
 
   try {
     const response = await fetch(`${backendUrl}/eve/${targetPath}${req.nextUrl.search}`, { method: req.method, headers, body: requestBody });
+    if (!response.ok && newConversationAppSessionId) {
+      await db.update(agentSessions).set({ runStatus: "failed", runStatusAt: new Date() }).where(eq(agentSessions.id, newConversationAppSessionId));
+    }
+    if (response.ok && newConversationAppSessionId) {
+      const eveSessionId = response.headers.get("x-eve-session-id");
+      if (eveSessionId) {
+        try {
+          await db.update(agentSessions).set({ eveSessionId, state: { sessionId: eveSessionId, streamIndex: 0 }, updatedAt: new Date() }).where(and(eq(agentSessions.id, newConversationAppSessionId), isNull(agentSessions.eveSessionId)));
+        } catch (error) { console.error("Initial Eve session link failed:", error); }
+      }
+    }
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("content-encoding");
     responseHeaders.delete("content-length");
     return new Response(response.body, { status: response.status, headers: responseHeaders });
   } catch (error) {
     console.error("Local Eve proxy error:", error);
+    if (newConversationAppSessionId) {
+      try { await db.update(agentSessions).set({ runStatus: "failed", runStatusAt: new Date() }).where(eq(agentSessions.id, newConversationAppSessionId)); }
+      catch (updateError) { console.error("Conversation failure update failed:", updateError); }
+    }
     return new Response("Unable to reach local agent", { status: 502 });
   }
 }
