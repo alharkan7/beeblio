@@ -65,6 +65,7 @@ import {
 import { AgentMessageList } from "./agent-message-list";
 import { ConversationLoading } from "./conversation-loading";
 import { errorDetail } from "@/lib/error-detail";
+import { markSessionViewed } from "@/app/[projectId]/actions";
 
 const transitionEventCache = new Map<string, readonly MessageStreamEvent[]>();
 
@@ -234,6 +235,19 @@ function AgentChatInner({
     latestStreamError(historyEvents),
   );
   const [cancellationState, setCancellationState] = useState<CancellationState>("idle");
+  useEffect(() => {
+    const markVisible = () => {
+      const appSessionId = sessionId ?? persistedSessionIdRef.current;
+      if (!projectId || !appSessionId || document.visibilityState !== "visible" ||
+        window.location.pathname !== `/${projectId}/${appSessionId}`) return;
+      void markSessionViewed(projectId, appSessionId)
+        .then(() => window.dispatchEvent(new CustomEvent("beeblio:session-viewed")))
+        .catch((error) => console.error("Failed to mark conversation viewed:", error));
+    };
+    markVisible();
+    document.addEventListener("visibilitychange", markVisible);
+    return () => document.removeEventListener("visibilitychange", markVisible);
+  }, [projectId, sessionId]);
   const persistCurrentSessionState = useCallback(
     (cursor: ClientSessionState | undefined, force = false) => {
       const appSessionId = sessionId ?? persistedSessionIdRef.current;
@@ -419,6 +433,16 @@ function AgentChatInner({
       if (event.type === "turn.started") {
         setStreamError(undefined);
         setIsErrorDismissed(false);
+      }
+      if (projectId && document.visibilityState === "visible" &&
+        (event.type === "turn.completed" || event.type === "turn.failed" ||
+          event.type === "session.failed" || event.type === "input.requested")) {
+        const appSessionId = sessionId ?? persistedSessionIdRef.current;
+        if (appSessionId && window.location.pathname === `/${projectId}/${appSessionId}`) {
+          void markSessionViewed(projectId, appSessionId)
+            .then(() => window.dispatchEvent(new CustomEvent("beeblio:session-viewed")))
+            .catch((error) => console.error("Failed to mark conversation viewed:", error));
+        }
       }
     },
     [projectId, sessionId],

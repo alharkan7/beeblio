@@ -22,12 +22,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { deleteSession, renameSession } from "../actions";
+import { isUnviewed, type SessionSummary } from "./session-summary";
 
 interface SessionItemProps {
-  session: {
-    id: string;
-    title: string | null;
-  };
+  session: SessionSummary;
   projectId: string;
   onSelect: () => void;
   onDeleted: () => void;
@@ -45,6 +43,12 @@ export function SessionItem({ session, projectId, onSelect, onDeleted, onRenamed
   const inputRef = useRef<HTMLInputElement>(null);
 
   const displayTitle = session.title || "New Session";
+  const unread = isUnviewed(session);
+  const statusLabel = session.runStatus === "running" ? "Running"
+    : session.runStatus === "needs_input" ? "Needs input"
+    : session.runStatus === "failed" ? "Failed"
+    : session.runStatus === "finished" && unread ? "Finished"
+    : null;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -121,19 +125,23 @@ export function SessionItem({ session, projectId, onSelect, onDeleted, onRenamed
         >
           <Button
             variant="ghost"
-            className="h-8 w-full min-w-0 max-w-full justify-start overflow-hidden pl-2 pr-9 text-xs font-normal text-muted-foreground transition-all hover:bg-primary/5 hover:text-primary"
+            className="h-8 w-full min-w-0 max-w-full justify-start overflow-hidden pl-2 pr-2 text-xs font-normal text-muted-foreground transition-all hover:bg-primary/5 hover:text-primary"
           >
             <TruncatedSessionTitle title={displayTitle} />
+            {statusLabel ? <span className="ml-auto inline-flex shrink-0 items-center gap-1 pl-1 text-[10px] font-medium transition-transform group-focus-within:-translate-x-8 [@media(hover:hover)]:group-hover:-translate-x-8 [@media(hover:none)]:-translate-x-8" aria-label={statusLabel}>
+              <span className={`size-1.5 rounded-full ${session.runStatus === "running" ? "animate-pulse bg-blue-500" : session.runStatus === "failed" ? "bg-destructive" : session.runStatus === "needs_input" ? "bg-amber-500" : "bg-primary"}`} />
+              {statusLabel}
+            </span> : null}
           </Button>
         </Link>
-        <div className="absolute right-1 z-10 rounded-md bg-sidebar/90 opacity-0 backdrop-blur-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+        <div className="absolute right-1 z-10 rounded-md opacity-70 transition-opacity group-focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6">
                 <MoreVertical className="h-3 w-3 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="z-[70]">
               <DropdownMenuItem
                 className="cursor-pointer flex items-center"
                 onClick={(e) => {

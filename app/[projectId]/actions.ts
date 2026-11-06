@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { cache } from "react";
 
 import { db } from "@/db";
@@ -82,7 +82,7 @@ export async function getProjectSessions(projectSlug: string) {
   return db
     // The history list only renders these fields. Selecting events here can
     // transfer the entire transcript for every conversation into the layout.
-    .select({ id: agentSessions.id, title: agentSessions.title })
+    .select({ id: agentSessions.id, title: agentSessions.title, runStatus: agentSessions.runStatus, runStatusAt: agentSessions.runStatusAt, lastViewedAt: agentSessions.lastViewedAt })
     .from(agentSessions)
     .where(and(eq(agentSessions.projectId, proj.id), isNull(agentSessions.deletedAt)))
     .orderBy(desc(agentSessions.createdAt));
@@ -102,4 +102,14 @@ export async function getSession(projectSlug: string, sessionId: string) {
     ),
   });
   return session ?? null;
+}
+
+/** Mark a non-deleted conversation in this project as viewed. */
+export async function markSessionViewed(projectSlug: string, sessionId: string) {
+  const user = await requireUser();
+  const proj = await getOwnedProject(user, projectSlug);
+  if (!proj) return;
+  await db.update(agentSessions)
+    .set({ lastViewedAt: sql`max(coalesce(${agentSessions.lastViewedAt}, 0), coalesce(${agentSessions.runStatusAt}, 0), cast(unixepoch('subsec') * 1000 as integer))` })
+    .where(and(eq(agentSessions.id, sessionId), eq(agentSessions.projectId, proj.id), isNull(agentSessions.deletedAt)));
 }

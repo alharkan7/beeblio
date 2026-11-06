@@ -1,4 +1,5 @@
 "use client";
+import type { SessionSummary } from "./session-summary";
 
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -135,7 +136,7 @@ interface ProjectLayoutUIProps {
   initialSwitcherProjects?: SwitcherProject[];
   /** User-scoped skill list (server-resolved) so the Skills panel opens populated. */
   initialSkills?: SkillSummary[];
-  initialSessions: Array<{ id: string; title: string | null }>;
+  initialSessions: SessionSummary[];
   /** File opened when the page loads without a ?file= param (server-resolved). */
   defaultFilePath?: string;
   /** Server-read text of the default file, seeding the client cache so its first open renders without a round trip. */

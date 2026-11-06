@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
   const [newSession] = await db
     .insert(agentSessions)
-    .values({ projectId: proj.id, title: initialTitle, state, eveSessionId: state?.sessionId })
+    .values({ projectId: proj.id, title: initialTitle, state, eveSessionId: state?.sessionId, runStatus: "running", runStatusAt: new Date() })
     .returning();
 
   after(async () => {
