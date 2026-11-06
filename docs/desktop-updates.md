@@ -14,7 +14,7 @@ How a new version of the desktop app gets from a tag to people's computers.
 
 ## Public downloads
 
-The [Releases page](https://github.com/alharkan7/beeblio-oss/releases) is the permanent download link in the README. Visitors choose the release marked **Latest** and download its `.dmg` or `.exe` from **Assets**. After the first stable release is published, [`releases/latest`](https://github.com/alharkan7/beeblio-oss/releases/latest) also points to it. GitHub Actions artifacts are build previews; they expire and are not the public download channel. Draft releases are for review before the installers become public.
+The [Releases page](https://github.com/alharkan7/beeblio/releases) is the permanent download link in the README. Visitors choose the release marked **Latest** and download its `.dmg` or `.exe` from **Assets**. After the first stable release is published, [`releases/latest`](https://github.com/alharkan7/beeblio/releases/latest) also points to it. GitHub Actions artifacts are build previews; they expire and are not the public download channel. Draft releases are for review before the installers become public.
 
 ## Channels
 
@@ -47,7 +47,7 @@ The app reads the GitHub Releases of one repository, fixed when it is built:
 - the repository variable `BEEBLIO_RELEASE_REPO` (`owner/repo`), if set under **Settings → Secrets and variables → Actions → Variables**;
 - otherwise the repository the workflow runs in.
 
-The app reads releases without signing in, so **updates only work from a public repository**. While releases live in a private repository, checks fail quietly and nobody is told about updates. Once releases are published from a public repository, such as upstream `alharkan7/beeblio-oss`, builds made from then on update from there. Installs made before then keep looking where they were built to look, so they need one manual install of a build that points at the public repository.
+The app reads releases without signing in, so **updates only work from a public repository**. While releases live in a private repository, checks fail quietly and nobody is told about updates. Releases are published from the public `alharkan7/beeblio` repository. If a build was configured to check another repository, install a current build manually once to update its release source.
 
 ## When a release is bad
 

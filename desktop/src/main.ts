@@ -50,7 +50,7 @@ const buildInfo = (() => {
     return {};
   }
 })();
-const releaseRepo = buildInfo.releaseRepo || "alharkan7/beeblio-oss";
+const releaseRepo = buildInfo.releaseRepo || "alharkan7/beeblio";
 /** Page loads retried while a restarted server comes back, before asking the person. */
 const MAX_LOAD_RETRIES = 5;
 

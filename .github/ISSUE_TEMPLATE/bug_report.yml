@@ -1,0 +1,34 @@
+name: Bug report
+description: Report something that is not working in Beeblio
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: For vulnerabilities, use the private reporting link in SECURITY.md instead.
+  - type: input
+    id: version
+    attributes:
+      label: Beeblio version
+      description: Release version or commit SHA; include OS for desktop issues.
+      placeholder: "1.1.0 on macOS 15"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open...\n2. Click...\n3. Observe..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots
+      description: Remove API keys, tokens, personal data, and project file contents before posting.

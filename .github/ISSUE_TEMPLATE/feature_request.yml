@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest a Beeblio improvement
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or workflow
+      description: Describe what you are trying to do today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include alternatives you considered if relevant.
+    validations:
+      required: true

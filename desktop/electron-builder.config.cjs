@@ -11,7 +11,7 @@ const canNotarize = Boolean(process.env.APPLE_TEAM_ID && ((process.env.APPLE_ID 
  * The repository whose GitHub Releases the app updates from (owner/repo).
  * CI passes the releasing repository; see docs/desktop-updates.md.
  */
-const releaseRepo = process.env.BEEBLIO_RELEASE_REPO || process.env.GITHUB_REPOSITORY || "alharkan7/beeblio-oss";
+const releaseRepo = process.env.BEEBLIO_RELEASE_REPO || process.env.GITHUB_REPOSITORY || "alharkan7/beeblio";
 const [releaseOwner, releaseName] = releaseRepo.split("/");
 /**
  * macOS installs updates only into a Developer-ID-signed app, so without the

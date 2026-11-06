@@ -1,7 +1,7 @@
 {
   "name": "beeblio-desktop",
   "productName": "Beeblio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Desktop app for the local Beeblio workspace",
   "private": true,
   "license": "Apache-2.0",
@@ -30,7 +30,7 @@
   "author": "Beeblio contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alharkan7/beeblio-oss.git",
+    "url": "https://github.com/alharkan7/beeblio.git",
     "directory": "desktop"
   }
 }

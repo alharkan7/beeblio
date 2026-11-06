@@ -1,4 +1,4 @@
-# Builds the desktop installers. Pushing a tag such as v0.1.0 also creates a
+# Builds the desktop installers. Pushing a tag such as v1.1.0 also creates a
 # draft GitHub Release with them; a manual run or a pull request that touches
 # packaging only uploads them as workflow artifacts, so packaging breaks are
 # caught before a release. Each platform builds on its own runner because the
@@ -120,7 +120,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      # A tag that disagrees with the app's version would ship installers named for another version.
+      # A tag that disagrees with either package version would ship misleading artifacts.
       - name: Check the tag matches desktop/package.json
         run: |
           version="$(node -p "require('./desktop/package.json').version")"
@@ -141,4 +141,16 @@ jobs:
         run: |
           channel=()
           [[ "$GITHUB_REF_NAME" == *-* ]] && channel=(--prerelease)
-          gh release create "$GITHUB_REF_NAME" installers/* --draft "${channel[@]}" --verify-tag --generate-notes --title "Beeblio ${GITHUB_REF_NAME#v}"
+          version="${GITHUB_REF_NAME#v}"
+          awk -v heading="## [$version]" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, heading) == 1) found = 1
+            }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no entry for $version"
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" installers/* --draft "${channel[@]}" --verify-tag --notes-file release-notes.md --title "Beeblio $version"
