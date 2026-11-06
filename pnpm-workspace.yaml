@@ -13,6 +13,8 @@ allowBuilds:
 
 overrides:
   '@vercel/eve-catalog': npm:picocolors@1.1.1
+  dompurify: 3.4.17
+  proxy-addr: 2.0.8
 
 minimumReleaseAgeExclude:
   - "@ai-sdk/*"

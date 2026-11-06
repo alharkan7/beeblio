@@ -15,6 +15,7 @@ This file records published Beeblio desktop releases. The source code on `main` 
 
 ### Improved
 
+- Updated Next.js and patched vulnerable DOMPurify and `proxy-addr` dependencies.
 - Workspace file listings and folder navigation.
 - Retry for failed chat messages, including repeated prompts. Thanks to idris chaalel for the initial retry contribution in [PR #8](https://github.com/alharkan7/beeblio/pull/8).
 - Native folder selection across supported desktop platforms, with Linux cancellation and error handling. Thanks to idris chaalel for [PR #7](https://github.com/alharkan7/beeblio/pull/7).
